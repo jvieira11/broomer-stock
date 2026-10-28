@@ -26,13 +26,13 @@ export function UserRow({ user, isSelf }: { user: User; isSelf: boolean }) {
   }
 
   return (
-    <tr className={`hover:bg-stone-50 ${user.active ? "" : "opacity-60"}`}>
+    <tr className={`hover:bg-neutral-50 ${user.active ? "" : "opacity-60"}`}>
       <td className={cellClass}>
         <p className="font-medium">
           {user.name}
-          {isSelf && <span className="ml-2 text-xs text-stone-400">(você)</span>}
+          {isSelf && <span className="ml-2 text-xs text-neutral-400">(você)</span>}
         </p>
-        <p className="text-xs text-stone-500">{user.email}</p>
+        <p className="text-xs text-neutral-500">{user.email}</p>
         {result.error && <p className="mt-1 text-xs text-red-600">{result.error}</p>}
       </td>
       <td className={cellClass}>

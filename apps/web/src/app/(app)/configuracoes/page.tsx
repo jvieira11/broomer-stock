@@ -25,7 +25,7 @@ export default async function SettingsPage() {
           </div>
         </Card>
         <Card title="Exportar dados">
-          <div className="space-y-4 text-sm text-stone-600">
+          <div className="space-y-4 text-sm text-neutral-600">
             <p>
               Baixe uma planilha do Excel com tudo o que a loja tem no
               sistema: estoque por SKU, categorias, todas as movimentações e a lista

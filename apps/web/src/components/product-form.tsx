@@ -69,7 +69,7 @@ function VariantGrid({
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-4">
+    <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
       <p className="text-sm font-semibold text-ink-900">Variações (SKUs)</p>
       <p className={`${hintClass} mb-4`}>
         Cada combinação de tamanho e cor tem saldo próprio. Para acessórios sem
@@ -91,7 +91,7 @@ function VariantGrid({
       {rows.length > 0 && (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-[11px] uppercase tracking-wider text-stone-500">
+            <thead className="text-left text-[11px] uppercase tracking-wider text-neutral-500">
               <tr>
                 <th className="px-2 py-2">Tamanho</th>
                 <th className="px-2 py-2">Cor</th>
@@ -139,7 +139,7 @@ function VariantGrid({
                       type="button"
                       aria-label="Remover variação"
                       onClick={() => setRows(rows.filter((x) => x.key !== r.key))}
-                      className="rounded-lg p-2 text-stone-400 hover:bg-red-50 hover:text-red-600"
+                      className="rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 size={16} />
                     </button>

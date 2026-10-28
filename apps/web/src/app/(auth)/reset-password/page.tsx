@@ -17,12 +17,12 @@ export default async function ResetPasswordPage({
     return (
       <>
         <h1 className="text-lg font-semibold">Link inválido</h1>
-        <p className="mb-5 mt-1 text-sm text-stone-500">
+        <p className="mb-5 mt-1 text-sm text-neutral-500">
           Abra o link exatamente como veio no e-mail, ou peça um novo.
         </p>
         <Link
           href="/forgot-password"
-          className="font-medium text-brass-700 hover:underline"
+          className="font-medium text-accent-700 hover:underline"
         >
           Pedir um link novo
         </Link>
@@ -33,16 +33,16 @@ export default async function ResetPasswordPage({
   return (
     <>
       <h1 className="text-lg font-semibold">Criar senha nova</h1>
-      <p className="mb-5 mt-1 text-sm text-stone-500">
+      <p className="mb-5 mt-1 text-sm text-neutral-500">
         Depois de salvar, você sai de todos os aparelhos e entra de novo com a
         senha nova.
       </p>
       <ResetPasswordForm token={token} />
-      <p className="mt-5 text-center text-sm text-stone-500">
+      <p className="mt-5 text-center text-sm text-neutral-500">
         O link expirou?{" "}
         <Link
           href="/forgot-password"
-          className="font-medium text-brass-700 hover:underline"
+          className="font-medium text-accent-700 hover:underline"
         >
           Peça um novo
         </Link>

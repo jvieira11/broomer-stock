@@ -23,13 +23,13 @@ function SidebarContent({ me }: { me: Me }) {
           className="min-w-0 rounded-lg px-2 py-1.5 hover:bg-white/5"
         >
           <p className="truncate text-sm font-semibold text-white">{me.name}</p>
-          <p className="truncate text-xs text-stone-400">{roleLabels[me.role]}</p>
+          <p className="truncate text-xs text-neutral-400">{roleLabels[me.role]}</p>
         </Link>
         <form action={logout}>
           <button
             type="submit"
             title="Sair"
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-stone-400 hover:bg-white/5 hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-neutral-400 hover:bg-white/5 hover:text-white"
           >
             <LogOut size={15} />
             Sair

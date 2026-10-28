@@ -106,7 +106,7 @@ export function InstallAppButton() {
           await prompt.userChoice;
           setPrompt(null);
         }}
-        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-brass-400 transition hover:bg-white/5"
+        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-accent-400 transition hover:bg-white/5"
       >
         <DownloadIcon />
         Instalar app
@@ -120,13 +120,13 @@ export function InstallAppButton() {
         <button
           type="button"
           onClick={() => setShowHint((value) => !value)}
-          className="flex items-center gap-2 py-2 text-sm font-medium text-brass-400"
+          className="flex items-center gap-2 py-2 text-sm font-medium text-accent-400"
         >
           <DownloadIcon />
           Instalar no iPhone
         </button>
         {showHint && (
-          <p className="pb-2 text-xs text-stone-400">
+          <p className="pb-2 text-xs text-neutral-400">
             No Safari, toque em <strong>Compartilhar</strong> e depois em{" "}
             <strong>Adicionar à Tela de Início</strong>.
           </p>

@@ -181,10 +181,10 @@ export default async function HistoryPage({
             >
               {movements.items.map((m) => (
                 <tr key={m.id} className={rowClass}>
-                  <td className={`${cellClass} text-stone-500`}>{formatDateTime(m.operation.occurredAt)}</td>
+                  <td className={`${cellClass} text-neutral-500`}>{formatDateTime(m.operation.occurredAt)}</td>
                   <td className={cellClass}>
                     <Link href={`/movimentacoes/${m.operation.id}`} className="flex items-center gap-2 hover:underline">
-                      <span className="text-xs text-stone-400">#{m.operation.number}</span>
+                      <span className="text-xs text-neutral-400">#{m.operation.number}</span>
                       <OperationBadge type={m.operation.type} />
                     </Link>
                   </td>
@@ -197,15 +197,15 @@ export default async function HistoryPage({
                     <Link href={`/movimentacoes?variantId=${m.variant.id}`} className="hover:underline">
                       {variantLabel(m.variant)}
                     </Link>
-                    <span className="block font-mono text-[11px] text-stone-400">{m.variant.sku}</span>
+                    <span className="block font-mono text-[11px] text-neutral-400">{m.variant.sku}</span>
                   </td>
                   <td className={`${cellClass} font-bold ${m.quantity > 0 ? "text-emerald-700" : "text-red-600"}`}>
                     {formatSigned(m.quantity)}
                   </td>
-                  <td className={`${cellClass} text-stone-500`}>
+                  <td className={`${cellClass} text-neutral-500`}>
                     {m.balanceBefore} → <span className="font-semibold text-ink-900">{m.balanceAfter}</span>
                   </td>
-                  <td className={`${cellClass} max-w-64 truncate text-stone-500`}>
+                  <td className={`${cellClass} max-w-64 truncate text-neutral-500`}>
                     {m.operation.saleReference && <Badge>Venda {m.operation.saleReference}</Badge>}{" "}
                     {m.operation.reason ?? m.operation.origin ?? m.operation.notes ?? ""}
                   </td>

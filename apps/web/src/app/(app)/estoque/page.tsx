@@ -132,7 +132,7 @@ export default async function StockPage({ searchParams }: PageProps<"/estoque">)
           </EmptyState>
         ) : (
           <>
-            <div className="border-b border-stone-100 px-4 py-2 text-xs text-stone-500">
+            <div className="border-b border-neutral-100 px-4 py-2 text-xs text-neutral-500">
               {stock.total} SKU(s) · {formatQuantity(pieces)} peça(s) nesta página
             </div>
             <Table
@@ -156,28 +156,28 @@ export default async function StockPage({ searchParams }: PageProps<"/estoque">)
                     <Link href={`/produtos/${v.product.id}`} className="block truncate font-medium hover:underline">
                       {v.product.name}
                     </Link>
-                    <span className="text-xs text-stone-400">Ref. {v.product.reference}</span>
+                    <span className="text-xs text-neutral-400">Ref. {v.product.reference}</span>
                   </td>
-                  <td className={`${cellClass} text-stone-500`}>
+                  <td className={`${cellClass} text-neutral-500`}>
                     {v.product.category?.name ?? "—"}
                   </td>
                   <td className={cellClass}>{v.size || "—"}</td>
                   <td className={cellClass}>{v.color || "—"}</td>
-                  <td className={`${cellClass} font-mono text-xs text-stone-500`}>{v.sku}</td>
+                  <td className={`${cellClass} font-mono text-xs text-neutral-500`}>{v.sku}</td>
                   <td className={`${cellClass} text-base font-bold`}>{v.quantity}</td>
-                  <td className={`${cellClass} text-stone-500`}>{v.minQuantity || "—"}</td>
+                  <td className={`${cellClass} text-neutral-500`}>{v.minQuantity || "—"}</td>
                   <td className={cellClass}>
                     <StatusBadge status={v.status} />
                   </td>
                   <td className={cellClass}>{formatCurrency(v.salePrice)}</td>
-                  <td className={`${cellClass} text-xs text-stone-500`}>
+                  <td className={`${cellClass} text-xs text-neutral-500`}>
                     {v.lastMovementAt ? formatDateTime(v.lastMovementAt) : "—"}
                   </td>
                   <td className={cellClass}>
                     <Link
                       href={`/movimentacoes?variantId=${v.id}`}
                       title="Histórico deste SKU"
-                      className="inline-flex rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-ink-900"
+                      className="inline-flex rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-ink-900"
                     >
                       <History size={16} />
                     </Link>

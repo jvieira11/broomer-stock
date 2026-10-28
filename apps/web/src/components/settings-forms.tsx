@@ -37,7 +37,7 @@ export function ChangePasswordForm() {
           autoComplete="new-password"
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-stone-500">Mínimo de 8 caracteres.</p>
+        <p className="mt-1 text-xs text-neutral-500">Mínimo de 8 caracteres.</p>
       </div>
       <div>
         <label htmlFor="confirmPassword" className={labelClass}>
@@ -104,7 +104,7 @@ export function OrganizationForm({
           placeholder="00.000.000/0000-00"
           className={`${inputClass} uppercase`}
         />
-        <p className="mt-1 text-xs text-stone-500">
+        <p className="mt-1 text-xs text-neutral-500">
           Aceita o CNPJ com letras. Deixe em branco para apagar.
         </p>
       </div>

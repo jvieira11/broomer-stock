@@ -132,36 +132,36 @@ function VariantRow({
             className={`${inputClass} w-28`}
           />
         ) : (
-          variant.minQuantity ?? <span className="text-stone-400">do modelo</span>
+          variant.minQuantity ?? <span className="text-neutral-400">do modelo</span>
         )}
       </td>
       <td className={cellClass}>
         {variant.active ? <StatusBadge status={variant.status} /> : <Badge>Desativada</Badge>}
       </td>
-      <td className={`${cellClass} text-stone-500`}>{formatUnitCost(variant.averageCost)}</td>
+      <td className={`${cellClass} text-neutral-500`}>{formatUnitCost(variant.averageCost)}</td>
       <td className={`${cellClass} text-right`}>
         <div className="flex justify-end gap-1">
           <Link
             href={`/movimentacoes?variantId=${variant.id}`}
             title="Histórico deste SKU"
-            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-ink-900"
+            className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-ink-900"
           >
             <History size={16} />
           </Link>
           {canEdit && !editing && (
             <>
-              <button type="button" title="Editar" onClick={() => setEditing(true)} className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-ink-900">
+              <button type="button" title="Editar" onClick={() => setEditing(true)} className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-ink-900">
                 <Pencil size={16} />
               </button>
               <button
                 type="button"
                 title={variant.active ? "Desativar" : "Reativar"}
                 onClick={() => setConfirm("toggle")}
-                className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-ink-900"
+                className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-ink-900"
               >
                 <Power size={16} />
               </button>
-              <button type="button" title="Excluir" onClick={() => setConfirm("delete")} className="rounded-lg p-1.5 text-stone-500 hover:bg-red-50 hover:text-red-600">
+              <button type="button" title="Excluir" onClick={() => setConfirm("delete")} className="rounded-lg p-1.5 text-neutral-500 hover:bg-red-50 hover:text-red-600">
                 <Trash2 size={16} />
               </button>
             </>
@@ -184,7 +184,7 @@ function VariantRow({
               >
                 <Check size={16} />
               </button>
-              <button type="button" title="Cancelar" onClick={() => setEditing(false)} className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100">
+              <button type="button" title="Cancelar" onClick={() => setEditing(false)} className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100">
                 <X size={16} />
               </button>
             </>
@@ -282,7 +282,7 @@ export function VariantManager({
   return (
     <>
       {product.variants.length === 0 ? (
-        <p className="px-5 py-8 text-center text-sm text-stone-500">
+        <p className="px-5 py-8 text-center text-sm text-neutral-500">
           Nenhuma variação cadastrada. Adicione as combinações de tamanho e cor.
         </p>
       ) : (
@@ -293,10 +293,10 @@ export function VariantManager({
         </Table>
       )}
       {(canEdit || state.error || state.success) && (
-        <div className="space-y-3 border-t border-stone-100 p-4">
+        <div className="space-y-3 border-t border-neutral-100 p-4">
           <FormMessage state={state} />
           {canEdit && <AddVariantForm productId={product.id} onResult={setState} />}
-          <p className="text-xs text-stone-500">
+          <p className="text-xs text-neutral-500">
             Preço de venda: {formatCurrency(product.salePrice)} para todas as variações.
           </p>
         </div>

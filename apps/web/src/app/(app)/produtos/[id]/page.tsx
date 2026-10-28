@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Produto" };
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">{label}</dt>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{label}</dt>
       <dd className="mt-1 text-sm text-ink-900">{children || "—"}</dd>
     </div>
   );
@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: PageProps<"/produtos/[id]"
               <Info label="Cadastrado em">{formatDate(product.createdAt)}</Info>
             </dl>
             {product.description && (
-              <p className="mt-4 border-t border-stone-100 pt-4 text-sm text-stone-600">
+              <p className="mt-4 border-t border-neutral-100 pt-4 text-sm text-neutral-600">
                 {product.description}
               </p>
             )}

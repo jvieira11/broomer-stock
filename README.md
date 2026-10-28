@@ -8,7 +8,7 @@ estornos e o histórico completo, com acesso por perfil.
 | Parte | Tecnologia |
 |---|---|
 | `apps/api` | NestJS 11, Prisma 7, PostgreSQL 17 |
-| `apps/web` | Next.js 16 (App Router, Server Actions), React 19, Tailwind 4, Lucide |
+| `apps/web` | Next.js 16 (App Router, Server Actions), React 19, Tailwind 4, Lucide, Montserrat |
 | Banco | Postgres no Docker (`docker-compose.yml`, porta **5434**) |
 | Produção | Docker Compose com Caddy e backups — ver [DEPLOY.md](DEPLOY.md) |
 

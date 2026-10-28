@@ -30,7 +30,7 @@ function links({ canMove, isAdmin }: NavFlags) {
       ? [
           {
             href: "/movimentacoes/nova",
-            label: "Registrar movimentação",
+            label: "Nova movimentação",
             icon: ArrowLeftRight,
           },
         ]
@@ -74,13 +74,13 @@ export function Nav(flags: NavFlags) {
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
               current
                 ? "bg-white/10 text-white"
-                : "text-stone-400 hover:bg-white/5 hover:text-white"
+                : "text-neutral-400 hover:bg-white/5 hover:text-white"
             }`}
           >
             <Icon
               size={17}
               strokeWidth={1.8}
-              className={current ? "text-brass-400" : ""}
+              className={current ? "text-accent-400" : ""}
             />
             {label}
           </Link>
@@ -94,14 +94,14 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <span className="flex flex-col leading-none">
       <span
-        className={`font-display font-semibold tracking-[0.32em] text-white ${
+        className={`font-display font-bold tracking-[0.28em] text-white ${
           compact ? "text-lg" : "text-xl"
         }`}
       >
         BROOMER
       </span>
       {!compact && (
-        <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-brass-400">
+        <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-400">
           Estoque
         </span>
       )}
@@ -131,7 +131,7 @@ export function MobileNav({
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Abrir menu"
-          className="rounded-lg p-2 text-stone-300 hover:bg-white/10 hover:text-white"
+          className="rounded-lg p-2 text-neutral-300 hover:bg-white/10 hover:text-white"
         >
           <Menu size={22} />
         </button>
@@ -151,7 +151,7 @@ export function MobileNav({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Fechar menu"
-                className="rounded-lg p-2 text-stone-400 hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-2 text-neutral-400 hover:bg-white/10 hover:text-white"
               >
                 <X size={20} />
               </button>

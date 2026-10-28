@@ -45,7 +45,7 @@ export function CategoryRow({
           {!category.active && <Badge>Desativada</Badge>}
         </p>
         {category.description && (
-          <p className="text-sm text-stone-500">{category.description}</p>
+          <p className="text-sm text-neutral-500">{category.description}</p>
         )}
         <Link href={`/produtos?categoryId=${category.id}`} className={`text-xs ${linkClass}`}>
           {count} produto(s)

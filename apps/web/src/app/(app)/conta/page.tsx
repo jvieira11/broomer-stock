@@ -16,19 +16,19 @@ export default async function AccountPage() {
         <Card title="Seus dados" className="lg:col-span-1">
           <dl className="space-y-3 text-sm">
             <div>
-              <dt className="text-stone-500">Nome</dt>
+              <dt className="text-neutral-500">Nome</dt>
               <dd className="font-medium">{me.name}</dd>
             </div>
             <div>
-              <dt className="text-stone-500">Loja</dt>
+              <dt className="text-neutral-500">Loja</dt>
               <dd className="font-medium">{me.organization.name}</dd>
             </div>
             <div>
-              <dt className="text-stone-500">Papel</dt>
+              <dt className="text-neutral-500">Papel</dt>
               <dd className="font-medium">{roleLabels[me.role]}</dd>
             </div>
           </dl>
-          <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
+          <p className="mt-4 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
             Para mudar nome, e-mail ou papel, fale com o administrador.
 
           </p>

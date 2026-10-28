@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
 /*
- * Identidade provisória da Broomer: grafite, branco e cinzas quentes, com um
- * tom de latão discreto como destaque. Para trocar pela identidade
- * definitiva, basta mudar estas variáveis (e a cor em layout.tsx/manifest.ts).
+ * Identidade alinhada ao site broomer.com.br: preto e branco, Montserrat,
+ * sem cor de destaque. "accent" é uma escala neutra usada em rótulos,
+ * ícones e no botão de venda. Para mudar a identidade, troque estas
+ * variáveis (e a cor em layout.tsx/manifest.ts).
  */
 @theme inline {
-  --font-sans: var(--font-manrope);
-  --font-display: var(--font-bodoni);
+  --font-sans: var(--font-montserrat);
+  --font-display: var(--font-montserrat);
 
-  --color-ink-950: #111113;
-  --color-ink-900: #1b1b1e;
-  --color-ink-800: #2a2a2e;
-  --color-ink-700: #3c3c41;
+  --color-ink-950: #000000;
+  --color-ink-900: #0a0a0a;
+  --color-ink-800: #1f1f1f;
+  --color-ink-700: #3a3a3a;
 
-  --color-brass-50: #f8f4ec;
-  --color-brass-100: #efe6d4;
-  --color-brass-200: #e0cfae;
-  --color-brass-400: #b89668;
-  --color-brass-500: #a3814f;
-  --color-brass-600: #8a6b40;
-  --color-brass-700: #6f5534;
+  --color-accent-50: #f5f5f5;
+  --color-accent-100: #e9e9e9;
+  --color-accent-200: #d4d4d4;
+  --color-accent-400: #a3a3a3;
+  --color-accent-500: #000000;
+  --color-accent-600: #3a3a3a;
+  --color-accent-700: #262626;
 }
 
 @layer base {

@@ -68,7 +68,7 @@ export default async function CategoriesPage({ searchParams }: PageProps<"/categ
               )}
             </EmptyState>
           ) : (
-            <ul className="-my-4 divide-y divide-stone-100">
+            <ul className="-my-4 divide-y divide-neutral-100">
               {categories.map((c) => (
                 <CategoryRow key={c.id} category={c} canEdit={canEdit} />
               ))}

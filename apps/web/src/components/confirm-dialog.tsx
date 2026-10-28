@@ -44,9 +44,9 @@ export function ConfirmDialog({
     >
       <div className="p-6">
         <h2 className="text-lg font-bold">{title}</h2>
-        {children && <div className="mt-3 text-sm text-stone-600">{children}</div>}
+        {children && <div className="mt-3 text-sm text-neutral-600">{children}</div>}
       </div>
-      <div className="flex flex-wrap justify-end gap-2 border-t border-stone-100 bg-stone-50 px-6 py-4">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-neutral-100 bg-neutral-50 px-6 py-4">
         <button type="button" onClick={onCancel} disabled={pending} className={buttonClass.secondary}>
           Voltar
         </button>

@@ -32,7 +32,7 @@ export function LoginForm() {
           </label>
           <Link
             href="/forgot-password"
-            className="text-xs text-brass-700 hover:underline"
+            className="text-xs text-accent-700 hover:underline"
           >
             Esqueci minha senha
           </Link>
@@ -109,7 +109,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           autoFocus
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-stone-500">Mínimo de 8 caracteres.</p>
+        <p className="mt-1 text-xs text-neutral-500">Mínimo de 8 caracteres.</p>
       </div>
       <div>
         <label htmlFor="confirmPassword" className={labelClass}>

@@ -46,7 +46,7 @@ export function UserForm() {
           autoComplete="new-password"
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-stone-500">
+        <p className="mt-1 text-xs text-neutral-500">
           Mínimo de 8 caracteres. Passe para a pessoa por um canal seguro.
         </p>
       </div>

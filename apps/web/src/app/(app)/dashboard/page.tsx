@@ -58,12 +58,12 @@ function FlowChart({ daily }: { daily: DashboardSummary["daily"] }) {
   const max = Math.max(...daily.flatMap((d) => [d.in, d.out]), 1);
   return (
     <div>
-      <div className="mb-3 flex gap-4 text-xs text-stone-500">
+      <div className="mb-3 flex gap-4 text-xs text-neutral-500">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm bg-ink-800" /> Entradas
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-brass-400" /> Saídas
+          <span className="h-2.5 w-2.5 rounded-sm bg-accent-400" /> Saídas
         </span>
       </div>
       <div className="flex h-48 items-end gap-1 overflow-x-auto pb-1">
@@ -79,11 +79,11 @@ function FlowChart({ daily }: { daily: DashboardSummary["daily"] }) {
                 style={{ height: `${(d.in / max) * 100}%` }}
               />
               <div
-                className="w-1/2 max-w-3 rounded-t bg-brass-400"
+                className="w-1/2 max-w-3 rounded-t bg-accent-400"
                 style={{ height: `${(d.out / max) * 100}%` }}
               />
             </div>
-            <span className="mt-1 text-center text-[10px] text-stone-400">
+            <span className="mt-1 text-center text-[10px] text-neutral-400">
               {formatDay(d.day)}
             </span>
           </div>
@@ -176,7 +176,7 @@ export default async function DashboardPage({
               data.period.from === localDate(-(p.days - 1)) &&
               data.period.to === localDate()
                 ? "bg-ink-900 text-white ring-ink-900"
-                : "bg-white text-stone-600 ring-stone-300 hover:bg-stone-100"
+                : "bg-white text-neutral-600 ring-neutral-300 hover:bg-neutral-100"
             }`}
           >
             Últimos {p.label}
@@ -188,17 +188,17 @@ export default async function DashboardPage({
             name="from"
             defaultValue={data.period.from}
             aria-label="De"
-            className="rounded-lg border border-stone-300 bg-white px-2 py-1"
+            className="rounded-lg border border-neutral-300 bg-white px-2 py-1"
           />
-          <span className="text-stone-400">até</span>
+          <span className="text-neutral-400">até</span>
           <input
             type="date"
             name="to"
             defaultValue={data.period.to}
             aria-label="Até"
-            className="rounded-lg border border-stone-300 bg-white px-2 py-1"
+            className="rounded-lg border border-neutral-300 bg-white px-2 py-1"
           />
-          <button type="submit" className="rounded-lg px-2 py-1 font-semibold text-ink-800 hover:bg-stone-100">
+          <button type="submit" className="rounded-lg px-2 py-1 font-semibold text-ink-800 hover:bg-neutral-100">
             Aplicar
           </button>
         </form>
@@ -278,7 +278,7 @@ export default async function DashboardPage({
             <ol className="space-y-3">
               {data.topProducts.map((p, i) => (
                 <li key={p.id} className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-xs font-bold text-stone-600">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-bold text-neutral-600">
                     {i + 1}
                   </span>
                   <Link
@@ -322,7 +322,7 @@ export default async function DashboardPage({
                   <td className={`${cellClass} font-semibold`}>
                     {v.quantity}
                     {v.minQuantity > 0 && (
-                      <span className="font-normal text-stone-400"> / mín. {v.minQuantity}</span>
+                      <span className="font-normal text-neutral-400"> / mín. {v.minQuantity}</span>
                     )}
                   </td>
                   <td className={cellClass}>
@@ -349,12 +349,12 @@ export default async function DashboardPage({
             <Table head={["Data", "Operação", "Itens", "Responsável"]}>
               {data.recentOperations.map((op) => (
                 <tr key={op.id} className={rowClass}>
-                  <td className={`${cellClass} text-stone-500`}>
+                  <td className={`${cellClass} text-neutral-500`}>
                     {formatDateTime(op.occurredAt)}
                   </td>
                   <td className={cellClass}>
                     <Link href={`/movimentacoes/${op.id}`} className="flex items-center gap-2 hover:underline">
-                      <span className="text-stone-400">#{op.number}</span>
+                      <span className="text-neutral-400">#{op.number}</span>
                       <OperationBadge type={op.type} />
                     </Link>
                   </td>
@@ -367,7 +367,7 @@ export default async function DashboardPage({
         </Card>
       </div>
 
-      <p className="mt-6 text-xs text-stone-400">
+      <p className="mt-6 text-xs text-neutral-400">
         Valor do estoque: {formatCurrency(data.stockCostValue)} pelo custo médio ·{" "}
         {formatCurrency(data.stockSaleValue)} pelo preço de venda.
       </p>

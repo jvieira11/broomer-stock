@@ -25,7 +25,7 @@ export const metadata: Metadata = { title: "Operação" };
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">{label}</dt>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{label}</dt>
       <dd className="mt-1 text-sm">{children || "—"}</dd>
     </div>
   );
@@ -64,7 +64,7 @@ export default async function OperationPage({
         </p>
       )}
       {op.reversedOperation && (
-        <p className="mb-6 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm">
+        <p className="mb-6 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm">
           Estorno da{" "}
           <Link href={`/movimentacoes/${op.reversedOperation.id}`} className={linkClass}>
             operação #{op.reversedOperation.number} ({operationLabels[op.reversedOperation.type].toLowerCase()})
@@ -82,7 +82,7 @@ export default async function OperationPage({
                   <Link href={`/produtos/${m.variant.product.id}`} className="block truncate font-medium hover:underline">
                     {m.variant.product.name}
                   </Link>
-                  <span className="text-xs text-stone-400">Ref. {m.variant.product.reference}</span>
+                  <span className="text-xs text-neutral-400">Ref. {m.variant.product.reference}</span>
                 </td>
                 <td className={cellClass}>
                   {[m.variant.size, m.variant.color].filter(Boolean).join(" · ") || "—"}
@@ -98,7 +98,7 @@ export default async function OperationPage({
                 <td className={cellClass}>
                   {m.balanceBefore} → <span className="font-semibold">{m.balanceAfter}</span>
                 </td>
-                <td className={`${cellClass} text-stone-500`}>{formatUnitCost(m.unitCost)}</td>
+                <td className={`${cellClass} text-neutral-500`}>{formatUnitCost(m.unitCost)}</td>
               </tr>
             ))}
           </Table>

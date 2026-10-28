@@ -102,21 +102,21 @@ export default async function ProductsPage({ searchParams }: PageProps<"/produto
             <Table head={["Referência", "Produto", "Categoria", "Variações", "Peças", "Alertas", "Preço", ""]}>
               {products.items.map((p) => (
                 <tr key={p.id} className={rowClass}>
-                  <td className={`${cellClass} font-mono text-xs text-stone-500`}>{p.reference}</td>
+                  <td className={`${cellClass} font-mono text-xs text-neutral-500`}>{p.reference}</td>
                   <td className={`${cellClass} max-w-72`}>
                     <Link href={`/produtos/${p.id}`} className="block truncate font-medium hover:underline">
                       {p.name}
                     </Link>
-                    {p.supplier && <span className="text-xs text-stone-400">{p.supplier.name}</span>}
+                    {p.supplier && <span className="text-xs text-neutral-400">{p.supplier.name}</span>}
                   </td>
-                  <td className={`${cellClass} text-stone-500`}>{p.category?.name ?? "—"}</td>
+                  <td className={`${cellClass} text-neutral-500`}>{p.category?.name ?? "—"}</td>
                   <td className={cellClass}>{p.variantCount}</td>
                   <td className={`${cellClass} font-semibold`}>{formatQuantity(p.totalQuantity)}</td>
                   <td className={cellClass}>
                     <div className="flex gap-1">
                       {p.outCount > 0 && <Badge tone="danger">{p.outCount} zerado(s)</Badge>}
                       {p.lowCount > 0 && <Badge tone="warning">{p.lowCount} baixo(s)</Badge>}
-                      {!p.outCount && !p.lowCount && <span className="text-stone-300">—</span>}
+                      {!p.outCount && !p.lowCount && <span className="text-neutral-300">—</span>}
                     </div>
                   </td>
                   <td className={cellClass}>{formatCurrency(p.salePrice)}</td>

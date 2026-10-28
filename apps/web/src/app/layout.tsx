@@ -1,18 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Manrope } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { ConnectionBanner, ServiceWorkerRegister } from "@/components/pwa";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+// Mesma fonte do site da Broomer.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-});
-
-// Só para a assinatura tipográfica BROOMER (provisória, sem logomarca).
-const bodoni = Bodoni_Moda({
-  variable: "--font-bodoni",
-  subsets: ["latin"],
-  weight: ["500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -32,7 +26,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // Cor da barra do navegador e da janela do app instalado.
-  themeColor: "#1b1b1e",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
 };
@@ -41,9 +35,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${manrope.variable} ${bodoni.variable} h-full antialiased`}
+      className={`${montserrat.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-stone-50 font-sans text-ink-900">
+      <body className="min-h-full bg-neutral-50 font-sans text-ink-900">
         <ConnectionBanner />
         {children}
         <ServiceWorkerRegister />

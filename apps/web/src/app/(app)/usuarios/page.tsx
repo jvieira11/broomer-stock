@@ -32,7 +32,7 @@ export default async function UsersPage() {
               {(Object.keys(roleLabels) as Role[]).map((role) => (
                 <div key={role}>
                   <dt className="font-medium">{roleLabels[role]}</dt>
-                  <dd className="text-stone-500">{roleDescriptions[role]}</dd>
+                  <dd className="text-neutral-500">{roleDescriptions[role]}</dd>
                 </div>
               ))}
             </dl>

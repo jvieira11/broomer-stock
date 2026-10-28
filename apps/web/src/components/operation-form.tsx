@@ -194,7 +194,7 @@ export function OperationForm({
           <p className="mt-3 text-lg font-bold">
             {operationLabels[done.type]} #{done.number} registrada
           </p>
-          <p className="mt-1 text-sm text-stone-500">
+          <p className="mt-1 text-sm text-neutral-500">
             {totalPieces} peça(s) em {items.length} SKU(s). Os saldos já foram atualizados.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -226,7 +226,7 @@ export function OperationForm({
                 className={`cursor-pointer rounded-xl border p-3 transition ${
                   type === t
                     ? "border-ink-900 bg-ink-900 text-white"
-                    : "border-stone-200 hover:border-stone-400"
+                    : "border-neutral-200 hover:border-neutral-400"
                 }`}
               >
                 <input
@@ -241,7 +241,7 @@ export function OperationForm({
                   className="sr-only"
                 />
                 <span className="block text-sm font-semibold">{operationLabels[t]}</span>
-                <span className={`mt-0.5 block text-xs ${type === t ? "text-stone-300" : "text-stone-500"}`}>
+                <span className={`mt-0.5 block text-xs ${type === t ? "text-neutral-300" : "text-neutral-500"}`}>
                   {operationDescriptions[t]}
                 </span>
               </label>
@@ -254,7 +254,7 @@ export function OperationForm({
           description={isInventory ? "Informe a contagem real de cada SKU." : "Busque pelo nome, referência ou bipe o código de barras."}
         >
           <div className="relative">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               ref={searchRef}
               value={search}
@@ -273,22 +273,22 @@ export function OperationForm({
               autoFocus
               className={`${inputClass} pl-9`}
             />
-            <ScanLine size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-300" />
+            <ScanLine size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-300" />
             {(results.length > 0 || (searching && search.trim().length >= 2)) && (
-              <ul className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white py-1 shadow-lg">
+              <ul className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg">
                 {searching && results.length === 0 && (
-                  <li className="px-4 py-3 text-sm text-stone-500">Buscando...</li>
+                  <li className="px-4 py-3 text-sm text-neutral-500">Buscando...</li>
                 )}
                 {results.map((v) => (
                   <li key={v.id}>
                     <button
                       type="button"
                       onClick={() => add(v)}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-stone-50"
+                      className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-neutral-50"
                     >
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium">{v.product.name}</span>
-                        <span className="text-xs text-stone-500">
+                        <span className="text-xs text-neutral-500">
                           {variantLabel(v)} · <span className="font-mono">{v.sku}</span>
                         </span>
                       </span>
@@ -308,7 +308,7 @@ export function OperationForm({
 
           {presetLeft.length > 0 && (
             <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
                 Variações de {preset[0].product.name}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -317,9 +317,9 @@ export function OperationForm({
                     key={v.id}
                     type="button"
                     onClick={() => add(v)}
-                    className="rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-medium hover:border-ink-800"
+                    className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium hover:border-ink-800"
                   >
-                    {variantLabel(v)} <span className="text-stone-400">({v.quantity})</span>
+                    {variantLabel(v)} <span className="text-neutral-400">({v.quantity})</span>
                   </button>
                 ))}
               </div>
@@ -327,7 +327,7 @@ export function OperationForm({
           )}
 
           {items.length > 0 && (
-            <ul className="mt-5 divide-y divide-stone-100 rounded-xl border border-stone-200">
+            <ul className="mt-5 divide-y divide-neutral-100 rounded-xl border border-neutral-200">
               {items.map((item) => {
                 const quantity = Number(item.quantity) || 0;
                 const after = isInventory
@@ -337,10 +337,10 @@ export function OperationForm({
                   <li key={item.variant.id} className="flex flex-wrap items-center gap-3 p-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{item.variant.product.name}</p>
-                      <p className="text-xs text-stone-500">
+                      <p className="text-xs text-neutral-500">
                         {variantLabel(item.variant)} · <span className="font-mono">{item.variant.sku}</span>
                       </p>
-                      <p className={`text-xs ${after < 0 ? "font-semibold text-red-600" : "text-stone-500"}`}>
+                      <p className={`text-xs ${after < 0 ? "font-semibold text-red-600" : "text-neutral-500"}`}>
                         Saldo: {item.variant.quantity} → {after}
                       </p>
                     </div>
@@ -350,7 +350,7 @@ export function OperationForm({
                           type="button"
                           aria-label="Diminuir"
                           onClick={() => update(item.variant.id, { quantity: String(Math.max(1, quantity - 1)) })}
-                          className="rounded-lg border border-stone-200 p-1.5 hover:bg-stone-100"
+                          className="rounded-lg border border-neutral-200 p-1.5 hover:bg-neutral-100"
                         >
                           <Minus size={14} />
                         </button>
@@ -370,7 +370,7 @@ export function OperationForm({
                           type="button"
                           aria-label="Aumentar"
                           onClick={() => update(item.variant.id, { quantity: String(quantity + 1) })}
-                          className="rounded-lg border border-stone-200 p-1.5 hover:bg-stone-100"
+                          className="rounded-lg border border-neutral-200 p-1.5 hover:bg-neutral-100"
                         >
                           <Plus size={14} />
                         </button>
@@ -390,7 +390,7 @@ export function OperationForm({
                       type="button"
                       aria-label="Remover"
                       onClick={() => setItems(items.filter((i) => i.variant.id !== item.variant.id))}
-                      className="rounded-lg p-2 text-stone-400 hover:bg-red-50 hover:text-red-600"
+                      className="rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -439,11 +439,11 @@ export function OperationForm({
         </Card>
 
         <Card>
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Resumo</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Resumo</p>
           <p className="mt-1 text-2xl font-bold">
             {totalPieces} peça(s)
           </p>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-neutral-500">
             {operationLabels[type]} · {items.length} SKU(s)
             {type === "SALE" && items.length > 0 && (
               <> · {formatCurrency(items.reduce((s, i) => s + (Number(i.quantity) || 0) * Number(i.variant.salePrice), 0))} pelo preço de tabela</>
