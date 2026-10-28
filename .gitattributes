@@ -1,0 +1,3 @@
+# Scripts que rodam dentro de containers Linux: sempre LF.
+*.sh text eol=lf
+Caddyfile text eol=lf

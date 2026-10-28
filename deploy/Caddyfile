@@ -1,0 +1,13 @@
+# HTTPS automático: o Caddy obtém e renova o certificado do domínio sozinho
+# (o DNS do domínio precisa apontar para este servidor).
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		# Navegadores passam a usar só HTTPS neste domínio.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy web:3000
+}

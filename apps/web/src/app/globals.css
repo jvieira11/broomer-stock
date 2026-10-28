@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/*
+ * Identidade provisória da Broomer: grafite, branco e cinzas quentes, com um
+ * tom de latão discreto como destaque. Para trocar pela identidade
+ * definitiva, basta mudar estas variáveis (e a cor em layout.tsx/manifest.ts).
+ */
+@theme inline {
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-bodoni);
+
+  --color-ink-950: #111113;
+  --color-ink-900: #1b1b1e;
+  --color-ink-800: #2a2a2e;
+  --color-ink-700: #3c3c41;
+
+  --color-brass-50: #f8f4ec;
+  --color-brass-100: #efe6d4;
+  --color-brass-200: #e0cfae;
+  --color-brass-400: #b89668;
+  --color-brass-500: #a3814f;
+  --color-brass-600: #8a6b40;
+  --color-brass-700: #6f5534;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  /* Números de estoque alinhados em colunas. */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}

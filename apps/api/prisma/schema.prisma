@@ -1,0 +1,262 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  // Fixo: sem isso o gerador deduz a extensão pelo tsconfig, e no Docker
+  // (onde o tsconfig ainda não foi copiado) geraria imports ".ts".
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// A loja. O sistema roda com uma só (a Broomer), mas todos os dados continuam
+// presos a ela: isso mantém o isolamento testado e permite outra loja no futuro.
+model Organization {
+  id         String           @id @default(uuid())
+  name       String
+  // Só letras e números, sem pontuação (o CNPJ pode ter letras desde 2026).
+  cnpj       String?
+  users      User[]
+  categories Category[]
+  suppliers  Supplier[]
+  products   Product[]
+  variants   ProductVariant[]
+  operations StockOperation[]
+  movements  StockMovement[]
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  @@map("organizations")
+}
+
+// ADMIN: tudo, inclusive usuários, ajustes e estornos.
+// MANAGER: cadastros, movimentações, ajustes e estornos.
+// OPERATOR: entradas e vendas. VIEWER: só leitura.
+enum Role {
+  ADMIN
+  MANAGER
+  OPERATOR
+  VIEWER
+}
+
+model User {
+  id              String               @id @default(uuid())
+  organizationId  String               @map("organization_id")
+  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name            String
+  email           String               @unique
+  passwordHash    String               @map("password_hash")
+  role            Role                 @default(OPERATOR)
+  active          Boolean              @default(true)
+  // Aceite dos termos de uso e da política de privacidade (LGPD).
+  termsVersion    String?              @map("terms_version")
+  termsAcceptedAt DateTime?            @map("terms_accepted_at")
+  // Aumenta ao trocar a senha: derruba as sessões abertas em outros aparelhos.
+  sessionVersion  Int                  @default(0) @map("session_version")
+  operations      StockOperation[]
+  movements       StockMovement[]
+  passwordResets  PasswordResetToken[]
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+// Link de "esqueci minha senha". Guardamos só o hash do token: quem ler o
+// banco não consegue usar um link enviado por e-mail.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// Categoria da loja (camisa, calça...). Com produtos, não é excluída: é
+// desativada, para não sumir dos produtos nem do histórico.
+model Category {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  active         Boolean      @default(true)
+  products       Product[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([organizationId, name])
+  @@map("categories")
+}
+
+// Fornecedor (no relatório do ERP: "FORNECEDOR - NOME FANTASIA").
+model Supplier {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  active         Boolean      @default(true)
+  products       Product[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([organizationId, name])
+  @@map("suppliers")
+}
+
+// Modelo comercial (ex.: "Camisa ML linho slim"). O estoque fica nas
+// variações; o modelo só agrupa. reference é a referência do modelo (no ERP,
+// os 7 primeiros dígitos do código), em texto por causa dos zeros à esquerda.
+model Product {
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reference      String
+  name           String
+  description    String?
+  collection     String?
+  // Linha/modelagem do ERP: SLIM, SUPER SLIM, COMFORT...
+  fit            String?
+  salePrice      Decimal          @default(0) @map("sale_price") @db.Decimal(10, 2)
+  // Alerta de estoque baixo, por variação (cada variação pode ter o seu).
+  minQuantity    Int              @default(0) @map("min_quantity")
+  active         Boolean          @default(true)
+  categoryId     String?          @map("category_id")
+  category       Category?        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  supplierId     String?          @map("supplier_id")
+  supplier       Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  variants       ProductVariant[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, name])
+  @@index([categoryId])
+  @@index([supplierId])
+  @@map("products")
+}
+
+// SKU: uma combinação de tamanho e cor, com saldo próprio. sku é o código de
+// barras/código do ERP (texto: preserva zeros à esquerda).
+// size e color valem "" quando não se aplicam (acessório sem grade), para a
+// combinação (produto, tamanho, cor) ser única de verdade no banco.
+// quantity e averageCost só mudam por movimentações.
+model ProductVariant {
+  id             String          @id @default(uuid())
+  organizationId String          @map("organization_id")
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productId      String          @map("product_id")
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sku            String
+  size           String          @default("")
+  color          String          @default("")
+  // Sobrepõem os valores do modelo quando preenchidos.
+  salePrice      Decimal?        @map("sale_price") @db.Decimal(10, 2)
+  minQuantity    Int?            @map("min_quantity")
+  quantity       Int             @default(0)
+  averageCost    Decimal         @default(0) @map("average_cost") @db.Decimal(14, 4)
+  active         Boolean         @default(true)
+  movements      StockMovement[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  @@unique([organizationId, sku])
+  @@unique([productId, size, color])
+  @@index([organizationId, color])
+  @@index([organizationId, size])
+  @@map("product_variants")
+}
+
+// Efeito de um item no saldo.
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+// O que aconteceu, do ponto de vista da loja. Define o efeito no saldo:
+// ENTRY, CUSTOMER_RETURN e INITIAL_LOAD somam; SALE, LOSS e SUPPLIER_RETURN
+// subtraem; INVENTORY define o saldo pela contagem; REVERSAL desfaz outra
+// operação.
+enum OperationType {
+  ENTRY
+  SALE
+  CUSTOMER_RETURN
+  SUPPLIER_RETURN
+  LOSS
+  INVENTORY
+  REVERSAL
+  INITIAL_LOAD
+}
+
+// Agrupa os itens registrados juntos (ex.: uma venda com várias peças).
+// number é o identificador mostrado na tela. idempotencyKey impede gravar
+// duas vezes o mesmo envio do formulário. Operações não são editadas nem
+// apagadas: erros se corrigem com estorno (REVERSAL), que aponta para a
+// original em reversedOperationId (no máximo um estorno por operação).
+model StockOperation {
+  id                  String          @id @default(uuid())
+  number              Int             @unique @default(autoincrement())
+  organizationId      String          @map("organization_id")
+  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type                OperationType
+  // Quando a operação aconteceu (pode ser anterior ao registro no sistema).
+  occurredAt          DateTime        @default(now()) @map("occurred_at")
+  // Número do cupom/venda, quando houver.
+  saleReference       String?         @map("sale_reference")
+  // Fornecedor ou origem da mercadoria.
+  origin              String?
+  // Motivo: obrigatório em perdas, ajustes, devoluções e estornos.
+  reason              String?
+  notes               String?
+  userId              String          @map("user_id")
+  user                User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  idempotencyKey      String?         @map("idempotency_key")
+  reversedOperationId String?         @unique @map("reversed_operation_id")
+  reversedOperation   StockOperation? @relation("Reversal", fields: [reversedOperationId], references: [id], onDelete: Restrict)
+  reversal            StockOperation? @relation("Reversal")
+  movements           StockMovement[]
+  createdAt           DateTime        @default(now()) @map("created_at")
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, occurredAt])
+  @@index([organizationId, type, occurredAt])
+  @@index([userId])
+  @@map("stock_operations")
+}
+
+// Um item de uma operação: o efeito em uma variação.
+// quantity tem sinal (+ entrada, - saída, ± ajuste); balanceBefore e
+// balanceAfter são o saldo da variação antes e depois; unitCost é o custo da
+// entrada ou o custo médio no momento da saída/ajuste.
+model StockMovement {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  operationId    String         @map("operation_id")
+  operation      StockOperation @relation(fields: [operationId], references: [id], onDelete: Restrict)
+  variantId      String         @map("variant_id")
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  userId         String         @map("user_id")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  type           MovementType
+  quantity       Int
+  balanceBefore  Int            @map("balance_before")
+  balanceAfter   Int            @map("balance_after")
+  unitCost       Decimal        @map("unit_cost") @db.Decimal(14, 4)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([variantId, createdAt])
+  @@index([operationId])
+  @@index([userId])
+  @@map("stock_movements")
+}

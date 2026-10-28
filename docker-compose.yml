@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: broomer-estoque-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: stock_user
+      POSTGRES_PASSWORD: stock_password
+      POSTGRES_DB: stock_database
+    ports:
+      - "5434:5432"
+    volumes:
+      - broomer_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  broomer_postgres_data:

@@ -1,0 +1,12 @@
+# Nada de segredos, dependências locais ou builds antigos na imagem.
+**/node_modules
+**/.next
+**/dist
+**/coverage
+apps/api/src/generated
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.claude
+backups

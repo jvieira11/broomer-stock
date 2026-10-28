@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#059669" />
+    <title>Sem conexão · Broomer Estoque</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #fafafa;
+        color: #18181b;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      main {
+        width: 100%;
+        max-width: 360px;
+        padding: 32px 24px;
+        text-align: center;
+        background: #ffffff;
+        border: 1px solid #e4e4e7;
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+      }
+      img {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+      }
+      h1 {
+        margin: 20px 0 8px;
+        font-size: 18px;
+      }
+      p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #71717a;
+      }
+      button {
+        margin-top: 24px;
+        padding: 10px 20px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: #ffffff;
+        background: #059669;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #047857;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" />
+      <h1>Sem conexão com a internet</h1>
+      <p>
+        O Broomer Estoque precisa de internet para mostrar o estoque atualizado.
+        Verifique sua conexão e tente de novo.
+      </p>
+      <button type="button" onclick="location.reload()">Tentar de novo</button>
+    </main>
+    <script>
+      // Volta sozinho assim que a conexão retornar.
+      window.addEventListener("online", () => location.reload());
+    </script>
+  </body>
+</html>

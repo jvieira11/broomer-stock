@@ -1,0 +1,13 @@
+{
+  "name": "broomer-estoque",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.23.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm --recursive build",
+    "db:up": "docker compose up -d postgres"
+  }
+}
