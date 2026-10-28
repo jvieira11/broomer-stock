@@ -2,10 +2,15 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-ink-900 px-4 py-12">
       <div className="mb-8 flex flex-col items-center leading-none">
-        <span className="font-display text-3xl font-bold tracking-[0.3em] text-white">
-          BROOMER
-        </span>
-        <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.35em] text-accent-400">
+        {/* eslint-disable-next-line @next/next/no-img-element -- logo estático */}
+        <img
+          src="/brand/broomer-logo.png"
+          alt="Broomer"
+          width={500}
+          height={74}
+          className="h-10 w-auto brightness-0 invert"
+        />
+        <span className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-accent-400">
           Gestão de estoque
         </span>
       </div>

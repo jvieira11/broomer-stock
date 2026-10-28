@@ -18,9 +18,10 @@ export function proxy(request: NextRequest) {
 
 // Fora do proxy: arquivos do Next e os do app instalável. O navegador busca o
 // manifest, os ícones e o service worker sem o cookie de login; se fossem
-// redirecionados para /login, a instalação do app falharia.
+// redirecionados para /login, a instalação do app falharia. O logo (brand/)
+// aparece na própria tela de login.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|manifest.webmanifest|sw.js|offline.html|icons/|icon.png|apple-icon.png).*)",
+    "/((?!_next/static|_next/image|manifest.webmanifest|sw.js|offline.html|icons/|brand/|icon.png|apple-icon.png).*)",
   ],
 };

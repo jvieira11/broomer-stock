@@ -1,33 +1,28 @@
-// Gera os ícones do app (PNG) a partir de um desenho em SVG, usando o
-// ImageResponse do próprio Next. Rode depois de mudar o desenho:
+// Gera os ícones do app (PNG) com o cavalo do logo da Broomer em branco
+// sobre preto, usando o ImageResponse do próprio Next. Rode depois de trocar
+// a imagem do cavalo:
 //   pnpm --filter web icons
-import { mkdir, writeFile } from "node:fs/promises";
+//
+// public/brand/broomer-knight-white.png é o cavalo recortado do logo
+// (public/brand/broomer-logo.png) e pintado de branco. Ele tem só 77x74 px:
+// com um arquivo do logo em alta resolução ou SVG, os ícones grandes ficam
+// mais nítidos.
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createElement as h } from "react";
 // next/og não tem "exports" no package.json: em ESM puro, o caminho leva .js.
 import { ImageResponse } from "next/og.js";
 
-const EMERALD = "#059669";
+const BLACK = "#000000";
+const KNIGHT_RATIO = 77 / 74;
 
-// Caixa de estoque em perspectiva, em branco, num quadrado de 100x100.
-function box(size) {
-  return h(
-    "svg",
-    { width: size, height: size, viewBox: "0 0 100 100" },
-    // Tampa
-    h("path", { d: "M50 14 L84 31 L50 48 L16 31 Z", fill: "#ffffff" }),
-    // Lado esquerdo
-    h("path", { d: "M16 36 L47 52 L47 88 L16 72 Z", fill: "#ffffff", opacity: 0.85 }),
-    // Lado direito
-    h("path", { d: "M84 36 L53 52 L53 88 L84 72 Z", fill: "#ffffff", opacity: 0.7 }),
-    // Fita da caixa
-    h("path", { d: "M33 22.5 L67 39.5 L67 47 L60 50.5 L60 43 L26 26 Z", fill: EMERALD, opacity: 0.35 }),
-  );
-}
+const knight = `data:image/png;base64,${(
+  await readFile("public/brand/broomer-knight-white.png")
+).toString("base64")}`;
 
 // "maskable": o sistema (Android) recorta o ícone em círculo ou outro
 // formato; o desenho precisa caber na zona segura central (80%).
 function icon({ size, maskable, rounded }) {
-  const art = Math.round(size * (maskable ? 0.56 : 0.68));
+  const height = Math.round(size * (maskable ? 0.5 : 0.62));
   return h(
     "div",
     {
@@ -37,11 +32,15 @@ function icon({ size, maskable, rounded }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: EMERALD,
+        background: BLACK,
         borderRadius: rounded ? Math.round(size * 0.22) : 0,
       },
     },
-    box(art),
+    h("img", {
+      src: knight,
+      width: Math.round(height * KNIGHT_RATIO),
+      height,
+    }),
   );
 }
 

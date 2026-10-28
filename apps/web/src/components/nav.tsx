@@ -90,18 +90,21 @@ export function Nav(flags: NavFlags) {
   );
 }
 
+// Logo oficial (cinza, fundo transparente) pintado de branco para o fundo
+// preto do menu.
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <span className="flex flex-col leading-none">
-      <span
-        className={`font-display font-bold tracking-[0.28em] text-white ${
-          compact ? "text-lg" : "text-xl"
-        }`}
-      >
-        BROOMER
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- logo estático pequeno */}
+      <img
+        src="/brand/broomer-logo.png"
+        alt="Broomer"
+        width={500}
+        height={74}
+        className={`w-auto brightness-0 invert ${compact ? "h-5" : "h-6"}`}
+      />
       {!compact && (
-        <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-400">
+        <span className="mt-2 pl-[22%] text-[10px] font-semibold uppercase tracking-[0.3em] text-accent-400">
           Estoque
         </span>
       )}
