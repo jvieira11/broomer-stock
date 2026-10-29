@@ -2,8 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/**"]
   pull_request:
+  # Toda segunda às 9h (Maceió): pega vulnerabilidades novas em dependências
+  # mesmo sem mudança no código. Se falhar, o GitHub avisa por e-mail.
+  schedule:
+    - cron: "0 12 * * 1"
 
 # Um push novo cancela a execução anterior do mesmo branch.
 concurrency:
@@ -11,6 +15,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  audit:
+    name: Dependências (vulnerabilidades)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Só o que vai para produção; falha com vulnerabilidade alta ou crítica.
+      # Moderadas e baixas aparecem no log para avaliação, sem travar.
+      - run: pnpm audit --prod --audit-level high
+
   api:
     name: API (lint, tipos, testes, build)
     runs-on: ubuntu-latest
