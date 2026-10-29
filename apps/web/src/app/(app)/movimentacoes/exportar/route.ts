@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { csvCell } from "@/lib/csv";
 import { formatDateTime, operationLabels } from "@/lib/format";
 import type { Movement, Page } from "@/lib/types";
 
@@ -17,11 +18,6 @@ const FILTERS = [
 const PAGE_SIZE = 200;
 const MAX_ROWS = 20_000;
 
-// CSV com ";" e BOM: abre direto no Excel em português.
-const cell = (value: string | number | null | undefined) => {
-  const text = String(value ?? "");
-  return /[";\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
 
 // Exporta o histórico com os mesmos filtros da tela. A API confere o login e
 // a loja em cada página buscada.
@@ -80,7 +76,7 @@ export async function GET(request: Request) {
           m.operation.notes,
           m.user.name,
         ]
-          .map(cell)
+          .map(csvCell)
           .join(";"),
       );
     }
