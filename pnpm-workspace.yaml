@@ -10,3 +10,10 @@ allowBuilds:
   prisma: true
   sharp: false
   unrs-resolver: false
+
+# Correções de segurança em dependências indiretas, até as diretas trazerem
+# a versão corrigida sozinhas (então apague a linha correspondente).
+overrides:
+  # @nestjs/platform-express 11 fixa o multer em 2.4.0, com falha de negação
+  # de serviço (GHSA para multer <2.5.0). 2.5.0 é correção, mesma API.
+  multer: 2.5.0
