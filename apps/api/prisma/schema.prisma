@@ -198,13 +198,15 @@ enum OperationType {
 }
 
 // Agrupa os itens registrados juntos (ex.: uma venda com várias peças).
-// number é o identificador mostrado na tela. idempotencyKey impede gravar
+// number é o identificador mostrado na tela, sequencial e sem buracos: é
+// atribuído no fim da transação (ver operation-number.ts), não por sequence,
+// que perderia o número de operações recusadas. idempotencyKey impede gravar
 // duas vezes o mesmo envio do formulário. Operações não são editadas nem
 // apagadas: erros se corrigem com estorno (REVERSAL), que aponta para a
 // original em reversedOperationId (no máximo um estorno por operação).
 model StockOperation {
   id                  String          @id @default(uuid())
-  number              Int             @unique @default(autoincrement())
+  number              Int             @unique
   organizationId      String          @map("organization_id")
   organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   type                OperationType

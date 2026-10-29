@@ -116,16 +116,16 @@ describe('Painel (e2e)', () => {
       totalPieces: 12,
       lowStockCount: 1,
       outOfStockCount: 1,
-      // Entradas e vendas registradas; o estorno aparece à parte.
+      // A venda estornada não conta; o estorno aparece à parte.
       entries: 19,
-      sales: 4,
-      saleOperations: 2,
+      sales: 2,
+      saleOperations: 1,
       otherOutputs: 1,
       reversals: 1,
       // 12 peças x 40 de custo / x 100 de venda; o inativo fica fora.
       stockCostValue: '480.00',
       stockSaleValue: '1200.00',
-      topProducts: [{ name: 'Camisa', sold: 4 }],
+      topProducts: [{ name: 'Camisa', sold: 2 }],
     });
     expect(res.lowStock.map((v) => `${v.sku}:${v.status}`)).toEqual([
       'C-G:OUT',

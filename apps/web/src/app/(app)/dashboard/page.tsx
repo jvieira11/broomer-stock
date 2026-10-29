@@ -302,7 +302,8 @@ export default async function DashboardPage({
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      {/* Lado a lado só em telas largas: em notebooks as tabelas não caberiam. */}
+      <div className="grid gap-6 2xl:grid-cols-2">
         <Card
           title="Variações com estoque baixo ou zerado"
           action={
@@ -317,15 +318,15 @@ export default async function DashboardPage({
               Todos os SKUs ativos estão acima do mínimo.
             </EmptyState>
           ) : (
-            <Table head={["Produto", "Variação", "Saldo", "Situação"]}>
+            <Table head={["Produto", "Saldo", "Situação"]}>
               {data.lowStock.map((v) => (
                 <tr key={v.id} className={rowClass}>
-                  <td className={`${cellClass} max-w-56 truncate`}>
+                  <td className={`${cellClass} max-w-64 truncate`}>
                     <Link href={`/produtos/${v.product.id}`} className="hover:underline">
                       {v.product.name}
                     </Link>
+                    <span className="block text-xs text-neutral-500">{variantLabel(v)}</span>
                   </td>
-                  <td className={cellClass}>{variantLabel(v)}</td>
                   <td className={`${cellClass} font-semibold`}>
                     {v.quantity}
                     {v.minQuantity > 0 && (
@@ -353,20 +354,20 @@ export default async function DashboardPage({
           {data.recentOperations.length === 0 ? (
             <EmptyState title="Nenhuma movimentação ainda" />
           ) : (
-            <Table head={["Data", "Operação", "Itens", "Responsável"]}>
+            <Table head={["Operação", "Data / responsável", "Itens"]}>
               {data.recentOperations.map((op) => (
                 <tr key={op.id} className={rowClass}>
-                  <td className={`${cellClass} text-neutral-500`}>
-                    {formatDateTime(op.occurredAt)}
-                  </td>
                   <td className={cellClass}>
                     <Link href={`/movimentacoes/${op.id}`} className="flex items-center gap-2 hover:underline">
                       <span className="text-neutral-400">#{op.number}</span>
                       <OperationBadge type={op.type} />
                     </Link>
                   </td>
+                  <td className={`${cellClass} max-w-48 truncate`}>
+                    {formatDateTime(op.occurredAt)}
+                    <span className="block text-xs text-neutral-500">{op.user.name}</span>
+                  </td>
                   <td className={cellClass}>{op._count?.movements ?? 0}</td>
-                  <td className={cellClass}>{op.user.name}</td>
                 </tr>
               ))}
             </Table>

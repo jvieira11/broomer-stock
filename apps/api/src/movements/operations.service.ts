@@ -20,6 +20,7 @@ import {
   QueryOperationDto,
   ReverseOperationDto,
 } from './dto/operation.dto';
+import { nextOperationNumber } from './operation-number';
 import {
   applyMovement,
   OPERATION_EFFECT,
@@ -326,7 +327,7 @@ export class OperationsService {
     input: {
       operation: Omit<
         Prisma.StockOperationUncheckedCreateInput,
-        'organizationId' | 'userId'
+        'organizationId' | 'userId' | 'number'
       >;
       items: PlannedItem[];
       allowInactive: boolean;
@@ -344,15 +345,10 @@ export class OperationsService {
       FOR UPDATE OF v`;
     const variants = new Map(locked.map((v) => [v.id, v]));
 
-    const operation = await tx.stockOperation.create({
-      data: {
-        ...input.operation,
-        organizationId: user.organizationId,
-        userId: user.id,
-      },
-    });
-
-    const movements: Prisma.StockMovementCreateManyInput[] = [];
+    const movements: Omit<
+      Prisma.StockMovementCreateManyInput,
+      'operationId'
+    >[] = [];
     for (const [index, item] of input.items.entries()) {
       const variant = variants.get(item.variantId);
       if (!variant) {
@@ -398,7 +394,6 @@ export class OperationsService {
       });
       movements.push({
         organizationId: user.organizationId,
-        operationId: operation.id,
         variantId: variant.id,
         userId: user.id,
         type: item.type,
@@ -408,7 +403,19 @@ export class OperationsService {
         unitCost: change.unitCost,
       });
     }
-    await tx.stockMovement.createMany({ data: movements });
+
+    // Só agora, com todos os itens válidos, a operação ganha número.
+    const operation = await tx.stockOperation.create({
+      data: {
+        ...input.operation,
+        number: await nextOperationNumber(tx),
+        organizationId: user.organizationId,
+        userId: user.id,
+      },
+    });
+    await tx.stockMovement.createMany({
+      data: movements.map((m) => ({ ...m, operationId: operation.id })),
+    });
 
     return tx.stockOperation.findUniqueOrThrow({
       where: { id: operation.id },

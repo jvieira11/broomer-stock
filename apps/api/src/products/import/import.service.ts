@@ -11,6 +11,7 @@ import {
   Prisma,
 } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { nextOperationNumber } from '../../movements/operation-number';
 import {
   ErpStockReport,
   parseErpStockReport,
@@ -244,6 +245,10 @@ export class ImportService {
       }
     }
 
+    // Produtos antes da operação: a trava do número fica presa só no fim.
+    await tx.product.createMany({ data: products });
+    await tx.productVariant.createMany({ data: variants });
+
     const [day, month, year] = [
       report.reportDate!.slice(8, 10),
       report.reportDate!.slice(5, 7),
@@ -253,6 +258,7 @@ export class ImportService {
       data: {
         organizationId,
         userId: user.id,
+        number: await nextOperationNumber(tx),
         type: OperationType.INITIAL_LOAD,
         occurredAt: endOfDay(report.reportDate!),
         origin: `Relatório "estoque final do dia" do ERP${report.store ? ` (loja ${report.store})` : ''}`,
@@ -262,8 +268,6 @@ export class ImportService {
       },
     });
 
-    await tx.product.createMany({ data: products });
-    await tx.productVariant.createMany({ data: variants });
     await tx.stockMovement.createMany({
       data: movements.map((m) => ({ ...m, operationId: operation.id })),
     });

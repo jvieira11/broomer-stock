@@ -181,6 +181,31 @@ describe('Operações de estoque (e2e)', () => {
     expect(outs.map((m) => m.balanceBefore)).toEqual([5, 4, 3, 2, 1]);
   });
 
+  it('numera as operações em sequência, sem buracos de vendas recusadas', async () => {
+    await enter(M_PRETO, 3);
+    await operate(admin.api, 'SALE', [
+      { variantId: variantId(M_PRETO), quantity: 9 },
+    ]).expect(400);
+    await Promise.all(
+      Array.from({ length: 6 }, () =>
+        operate(admin.api, 'SALE', [
+          { variantId: variantId(M_PRETO), quantity: 1 },
+        ]),
+      ),
+    );
+    await enter(M_BRANCO, 1);
+
+    const numbers = (
+      await prisma.stockOperation.findMany({
+        select: { number: true },
+        orderBy: { number: 'asc' },
+      })
+    ).map((o) => o.number);
+    // Entrada + 3 vendas aceitas (3 recusadas por falta de saldo) + entrada.
+    expect(numbers).toHaveLength(5);
+    expect(numbers).toEqual(numbers.map((_, i) => numbers[0] + i));
+  });
+
   it('vendas cruzadas simultâneas não travam (sem deadlock)', async () => {
     await operate(admin.api, 'ENTRY', [
       { variantId: variantId(M_PRETO), quantity: 10 },
