@@ -7,8 +7,8 @@ import { PrismaClient, Role } from '../generated/prisma/client';
 // único caminho para o primeiro acesso.
 //   Desenvolvimento: pnpm --filter api db:seed
 //   Produção (imagem Docker, sem tsx):
-//     docker compose ... exec -e SEED_ADMIN_EMAIL=... -e SEED_ADMIN_PASSWORD=... api node dist/scripts/create-admin.js Os demais usuários são criados pelo
-// administrador em Usuários.
+//     docker compose ... exec -e SEED_ADMIN_EMAIL=... -e SEED_ADMIN_PASSWORD=... api node dist/scripts/create-admin.js
+// Os demais usuários são criados pelo administrador em Usuários.
 //
 // Seguro de rodar mais de uma vez: se a loja já tem um administrador ativo,
 // não faz nada (não troca senha nem cria duplicatas).

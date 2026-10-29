@@ -58,10 +58,20 @@ docker compose -f docker-compose.prod.yml --env-file .env.production ps
 Na primeira subida, a API aplica as migrations sozinha. Em 1–2 minutos o
 Caddy emite o certificado HTTPS.
 
-Não há cadastro público: o primeiro administrador é criado pelo seed
-(`pnpm --filter api db:seed`, ver README). A imagem de produção não inclui o
-`tsx`; até isso ser resolvido, rode o seed de uma máquina de desenvolvimento
-apontando `DATABASE_URL` para o banco de produção por um túnel SSH.
+Não há cadastro público. Crie o primeiro administrador no próprio servidor,
+com a API já no ar (a senha é digitada sem aparecer e não fica no histórico):
+
+```bash
+read -r -p "E-mail do administrador: " ADMIN_EMAIL
+read -r -s -p "Senha (12+ caracteres): " ADMIN_PASSWORD; echo
+docker compose -f docker-compose.prod.yml --env-file .env.production exec \
+  -e SEED_ADMIN_EMAIL="$ADMIN_EMAIL" -e SEED_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  api node dist/scripts/create-admin.js
+unset ADMIN_PASSWORD
+```
+
+Pode rodar mais de uma vez: se a loja já tiver um administrador ativo, não
+faz nada. Troque a senha em **Minha conta** no primeiro acesso.
 
 Se a API não subir, veja o log:
 
@@ -208,14 +218,8 @@ Ao subir, a API aplica as migrations pendentes pela conexão direta
 (`DIRECT_URL`) e passa a usar a do pooler (`DATABASE_URL`). Os 2 a 5 usuários
 entram pelo mesmo endereço, cada um com o seu login, e veem os mesmos dados.
 
-**Primeiro administrador:** de uma máquina de desenvolvimento, com as URLs só
-na linha de comando (nada gravado em arquivo):
-
-```bash
-DATABASE_URL='URL-DO-POOLER' DIRECT_URL='URL-DIRETA' \
-SEED_ADMIN_EMAIL='voce@empresa.com.br' SEED_ADMIN_PASSWORD='senha-com-12+' \
-pnpm --filter api db:seed
-```
+**Primeiro administrador:** como na seção 4, trocando o arquivo de compose e
+o `--env-file` (`-f docker-compose.neon.yml --env-file .env.neon`).
 
 ### Cuidados
 
@@ -239,7 +243,17 @@ São três camadas:
 
 1. **Restauração do Neon** a um ponto no tempo (a janela depende do plano).
 2. **`pg_dump` diário** do serviço `backup`, em `./backups` no servidor.
-3. **Cópia externa** desses arquivos com o rclone, como na seção 6.
+3. **Cópia externa** desses arquivos pelo serviço `offsite` (rclone), sem
+   cron no servidor:
+   1. Crie um bucket no Cloudflare R2 (ou Backblaze B2) e uma chave com
+      permissão só de escrita nele.
+   2. Preencha as variáveis `OFFSITE_*` no `.env.neon`.
+   3. Suba com o perfil ligado:
+      `docker compose -f docker-compose.neon.yml --env-file .env.neon --profile offsite up -d`
+   4. Confira em `... logs offsite` a linha "cópia externa ok" e o arquivo no
+      painel do bucket.
+   5. No bucket, crie uma regra de ciclo de vida que apague arquivos com mais
+      de 90 dias: o serviço só envia, nunca apaga.
 
 O teste mensal (`verify-latest.sh`) funciona igual, trocando o arquivo de
 compose e o `--env-file` no comando. Ele cria e apaga um banco temporário no

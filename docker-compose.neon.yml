@@ -78,6 +78,28 @@ services:
       - ./deploy/backup:/scripts:ro
     entrypoint: ["sh", "/scripts/backup-loop.sh"]
 
+  # Opcional: copia os dumps de ./backups para um bucket fora do servidor
+  # (R2, B2 ou outro S3). Liga com --profile offsite (ver DEPLOY.md).
+  offsite:
+    image: rclone/rclone:1.75.2
+    profiles: ["offsite"]
+    restart: unless-stopped
+    environment:
+      # Configuração do rclone só por variáveis: nenhum arquivo com segredo.
+      RCLONE_CONFIG_OFFSITE_TYPE: s3
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${OFFSITE_PROVIDER:-Cloudflare}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${OFFSITE_ENDPOINT:-}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${OFFSITE_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${OFFSITE_SECRET_ACCESS_KEY:-}
+      # A chave pode ter permissão só de escrita no bucket, sem criar buckets.
+      RCLONE_CONFIG_OFFSITE_NO_CHECK_BUCKET: "true"
+      OFFSITE_BUCKET: ${OFFSITE_BUCKET:-}
+      OFFSITE_INTERVAL_SECONDS: ${OFFSITE_INTERVAL_SECONDS:-21600}
+    volumes:
+      - ./backups:/backups:ro
+      - ./deploy/backup:/scripts:ro
+    entrypoint: ["sh", "/scripts/offsite-loop.sh"]
+
 volumes:
   caddy_data:
   caddy_config:
