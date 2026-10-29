@@ -11,6 +11,8 @@ export default defineConfig({
     // process.env em vez de env(): gerar o cliente (postinstall) não precisa
     // de banco, e assim `pnpm install` funciona sem .env (ex.: no CI do web).
     // Comandos que acessam o banco avisam se a variável faltar.
-    url: process.env.DATABASE_URL,
+    // DIRECT_URL: com banco gerenciado (Neon), as migrations usam a conexão
+    // direta e a API usa a do pooler (DATABASE_URL). Sem ela, vale DATABASE_URL.
+    url: process.env.DIRECT_URL || process.env.DATABASE_URL,
   },
 });

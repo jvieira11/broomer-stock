@@ -46,7 +46,7 @@ WORKDIR /repo/apps/api
 USER node
 EXPOSE 3333
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:3333/api/health || exit 1
+  CMD wget -qO- http://127.0.0.1:3333/api/health/live || exit 1
 # Aplica as migrations pendentes antes de subir (seguro rodar toda vez:
 # migrate deploy só aplica o que falta e nunca apaga dados).
 CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && exec node dist/main.js"]

@@ -2,7 +2,10 @@ import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { Public } from '../auth/decorators';
 import { PrismaService } from '../prisma/prisma.service';
 
-// Usado pelo Docker, pelo proxy e por monitores de disponibilidade (uptime).
+// /health confere o banco: para monitores de disponibilidade (uptime).
+// /health/live só diz que a API está no ar, sem consultar o banco: é o que o
+// Docker chama a cada poucos segundos. Assim um banco gerenciado que desliga
+// quando ocioso (Neon) não fica acordado o tempo todo por causa disso.
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
@@ -19,5 +22,11 @@ export class HealthController {
       });
     }
     return { status: 'ok', database: 'ok' };
+  }
+
+  @Public()
+  @Get('live')
+  live() {
+    return { status: 'ok' };
   }
 }

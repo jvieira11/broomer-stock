@@ -24,7 +24,8 @@ export default function globalSetup() {
 
   const options = {
     cwd: `${__dirname}/..`,
-    env: { ...process.env, DATABASE_URL: url },
+    // DIRECT_URL também: o prisma.config.ts a prefere à DATABASE_URL.
+    env: { ...process.env, DATABASE_URL: url, DIRECT_URL: url },
   };
 
   try {

@@ -1,0 +1,82 @@
+# Produção com o banco no Neon (PostgreSQL gerenciado), em vez do Postgres
+# no próprio servidor. Igual ao docker-compose.prod.yml, sem o serviço postgres.
+#   cp .env.neon.example .env.neon   # e preencha (ver DEPLOY.md)
+#   docker compose -f docker-compose.neon.yml --env-file .env.neon up -d --build
+#
+# Só a API conecta ao banco; o navegador fala só com o web (via Caddy).
+# Nome próprio para não se misturar com os outros arquivos de compose.
+name: stock-neon
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Uso normal pelo pooler do Neon; as migrations (ao subir) pela conexão
+      # direta, que o prisma.config.ts prefere quando DIRECT_URL existe.
+      DATABASE_URL: postgresql://${DB_USER:?defina DB_USER no .env.neon}:${DB_PASSWORD:?defina DB_PASSWORD no .env.neon}@${DB_POOLER_HOST:?defina DB_POOLER_HOST no .env.neon}/${DB_NAME:?defina DB_NAME no .env.neon}?sslmode=require
+      DIRECT_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST:?defina DB_HOST no .env.neon}/${DB_NAME}?sslmode=require
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env.neon}
+      WEB_URL: https://${DOMAIN}
+      # Um proxy na frente da API: o servidor do web, que repassa o IP do usuário.
+      TRUST_PROXY: "1"
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: production
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:3333/api
+    depends_on:
+      api:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?defina DOMAIN no .env.neon}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  # pg_dump diário do banco no Neon, pela conexão direta, guardado em
+  # ./backups no servidor. É uma cópia além da restauração do próprio Neon;
+  # copie a pasta para fora do servidor (ver DEPLOY.md). Para restaurar no
+  # Neon, use uma branch nova (DEPLOY.md), não o restore.sh direto na produção.
+  backup:
+    # Mesma versão principal do Postgres criado no Neon (17).
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: ${DB_HOST}
+      PGUSER: ${DB_USER}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME}
+      PGSSLMODE: require
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - ./backups:/backups
+      - ./deploy/backup:/scripts:ro
+    entrypoint: ["sh", "/scripts/backup-loop.sh"]
+
+volumes:
+  caddy_data:
+  caddy_config:

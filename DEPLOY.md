@@ -124,8 +124,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.production start api w
 
 - **Disponibilidade:** cadastre no UptimeRobot/Better Stack um monitor HTTP
   para `https://SEU_DOMINIO/login`, a cada 5 minutos, com alerta por e-mail
-  ou WhatsApp. O `GET /api/health` (que também testa o banco) é usado pelos
-  health checks internos do Docker.
+  ou WhatsApp. O `GET /api/health` também testa o banco e serve para esse
+  tipo de monitor. Os health checks internos do Docker usam
+  `GET /api/health/live`, que não consulta o banco.
 - **Erros:** crie um projeto Node.js no sentry.io e cole o DSN em
   `SENTRY_DSN`. Erros inesperados da API (500) passam a chegar lá com o stack
   trace. Sem o DSN, eles vão só para `docker compose logs api`.
@@ -155,6 +156,87 @@ Cada push e pull request no GitHub roda `.github/workflows/ci.yml`: lint,
 tipos, testes unitários, testes e2e com Postgres e build das imagens Docker.
 Veja o resultado na aba **Actions** do repositório. Só atualize o servidor
 com commits em que o CI passou.
+
+## 10. Alternativa: banco no Neon (PostgreSQL gerenciado)
+
+Em vez do Postgres rodando no próprio servidor, o banco pode ficar no
+[Neon](https://neon.tech). O servidor passa a rodar só API, web, Caddy e o
+backup; se ele for perdido, os dados continuam no Neon. Nada muda no código
+nem no login: o Neon é só o lugar onde o Postgres roda.
+
+```
+Internet ──HTTPS──▶ Caddy ──▶ web ──▶ api ──TLS──▶ Neon (pooler)
+                                       │ migrations ──▶ Neon (conexão direta)
+                     backup (pg_dump) ─┘──────────────▶ Neon (conexão direta)
+```
+
+### Criar o banco
+
+1. Crie a conta no Neon com 2FA ativado.
+2. Novo projeto: **Postgres 17** (a mesma versão do desenvolvimento, do CI e
+   da imagem de backup) e região **São Paulo** (AWS sa-east-1), se oferecida.
+3. A branch `main` do projeto é a produção. Crie também uma branch `dev` para
+   testar migrations e restaurações sem tocar na produção.
+4. Em **Connect**, anote o host direto, o host com `-pooler`, o usuário, a
+   senha e o nome do banco. Eles vão só para o `.env.neon` do servidor.
+
+### Configurar e subir
+
+```bash
+cp .env.neon.example .env.neon
+nano .env.neon          # DB_*, DOMAIN, JWT_SECRET...
+chmod 600 .env.neon
+docker compose -f docker-compose.neon.yml --env-file .env.neon up -d --build
+```
+
+Use `docker-compose.neon.yml` **ou** `docker-compose.prod.yml`, nunca os dois
+no mesmo servidor apontando para dados diferentes.
+
+Ao subir, a API aplica as migrations pendentes pela conexão direta
+(`DIRECT_URL`) e passa a usar a do pooler (`DATABASE_URL`). Os 2 a 5 usuários
+entram pelo mesmo endereço, cada um com o seu login, e veem os mesmos dados.
+
+**Primeiro administrador:** de uma máquina de desenvolvimento, com as URLs só
+na linha de comando (nada gravado em arquivo):
+
+```bash
+DATABASE_URL='URL-DO-POOLER' DIRECT_URL='URL-DIRETA' \
+SEED_ADMIN_EMAIL='voce@empresa.com.br' SEED_ADMIN_PASSWORD='senha-com-12+' \
+pnpm --filter api db:seed
+```
+
+### Cuidados
+
+- **Credenciais:** só no `.env.neon` do servidor. Nunca no GitHub, no web, no
+  CI ou no `apps/api/.env`. Se vazarem, troque a senha no painel do Neon,
+  atualize o `.env.neon` e reinicie.
+- **Desenvolvimento:** nunca aponte o `apps/api/.env` para a branch `main`.
+  O `prisma migrate dev` pode propor apagar o banco. Os testes e2e se recusam
+  a rodar fora de um Postgres local.
+- **Migrations:** antes de atualizar a produção, crie no Neon uma branch a
+  partir da `main` e rode `prisma migrate deploy` nela para ver se passa.
+- **Banco ocioso:** no plano gratuito o Neon desliga o banco quando ninguém
+  usa, e a primeira consulta depois disso demora um pouco mais. O health check
+  do Docker não consulta o banco, para não mantê-lo ligado à toa. Um monitor
+  externo em `/api/health` a cada 5 minutos o mantém ligado (e consome as
+  horas do plano); use `/login` no monitor se preferir deixá-lo dormir.
+
+### Backups e restauração
+
+São três camadas:
+
+1. **Restauração do Neon** a um ponto no tempo (a janela depende do plano).
+2. **`pg_dump` diário** do serviço `backup`, em `./backups` no servidor.
+3. **Cópia externa** desses arquivos com o rclone, como na seção 6.
+
+O teste mensal (`verify-latest.sh`) funciona igual, trocando o arquivo de
+compose e o `--env-file` no comando. Ele cria e apaga um banco temporário no
+próprio projeto do Neon.
+
+**Para restaurar, não use o `restore.sh` direto na produção.** Restaure numa
+branch nova do Neon (pelo painel, a um ponto no tempo, ou com `pg_restore` de
+um dump numa branch vazia), confira os dados e só então troque os hosts do
+`.env.neon` para essa branch, ou promova-a no painel, e reinicie a API.
 
 ## Checklist antes de usar em produção
 
