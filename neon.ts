@@ -1,8 +1,8 @@
 import { defineConfig } from "@neon/config/v1";
 
 export default defineConfig({
-  // Declare your Neon services here
-  auth: true,
+  // Só o Postgres (vem em todo projeto). O login continua sendo o próprio
+  // do Broomer (apps/api/src/auth): Neon Auth não é usado.
   // Branch policy: per-branch tuning
   branch: (branch) => {
     if (branch.isDefault) {

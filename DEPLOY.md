@@ -173,12 +173,24 @@ Internet ──HTTPS──▶ Caddy ──▶ web ──▶ api ──TLS──�
 ### Criar o banco
 
 1. Crie a conta no Neon com 2FA ativado.
-2. Novo projeto: **Postgres 17** (a mesma versão do desenvolvimento, do CI e
-   da imagem de backup) e região **São Paulo** (AWS sa-east-1), se oferecida.
+2. Novo projeto na região **São Paulo** (AWS sa-east-1). O projeto da Broomer
+   (`red-night-50336791`) usa **Postgres 18**; a imagem do serviço `backup`
+   no `docker-compose.neon.yml` precisa ter a mesma versão principal.
 3. A branch `main` do projeto é a produção. Crie também uma branch `dev` para
    testar migrations e restaurações sem tocar na produção.
 4. Em **Connect**, anote o host direto, o host com `-pooler`, o usuário, a
    senha e o nome do banco. Eles vão só para o `.env.neon` do servidor.
+
+Pela CLI do Neon (`npm i -g neon`), o projeto já está declarado no `neon.ts`
+(só Postgres; o login continua sendo o do Broomer). Com a CLI autenticada
+(`neon login` ou `NEON_API_KEY`), `neon link` e `neon deploy` gravam
+`DATABASE_URL` (pooler) e `DATABASE_URL_UNPOOLED` (direta) no `.env.local`
+da raiz, que fica fora do git. A API e o Prisma entendem esses dois nomes:
+
+```bash
+set -a; . ./.env.local; set +a
+pnpm --filter api exec prisma migrate deploy   # usa DATABASE_URL_UNPOOLED
+```
 
 ### Configurar e subir
 
