@@ -139,9 +139,16 @@ export default async function DashboardPage({
             title="Nenhum produto cadastrado ainda"
             action={
               canEdit ? (
-                <Link href="/produtos/novo" className={buttonClass.primary}>
-                  <Plus size={16} /> Cadastrar o primeiro produto
-                </Link>
+                <>
+                  {me.role === "ADMIN" && (
+                    <Link href="/produtos/importar" className={buttonClass.primary}>
+                      Importar estoque do ERP
+                    </Link>
+                  )}
+                  <Link href="/produtos/novo" className={buttonClass.secondary}>
+                    <Plus size={16} /> Cadastrar produto
+                  </Link>
+                </>
               ) : undefined
             }
           >

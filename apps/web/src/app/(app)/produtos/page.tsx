@@ -1,4 +1,4 @@
-import { Plus, Shirt } from "lucide-react";
+import { Plus, Shirt, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -18,7 +18,7 @@ import {
 import { api } from "@/lib/api";
 import { getMe, pickQuery } from "@/lib/data";
 import { formatCurrency, formatQuantity } from "@/lib/format";
-import { canEditCatalog } from "@/lib/permissions";
+import { canEditCatalog, canManageUsers } from "@/lib/permissions";
 import type { Category, Page, ProductListItem } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Produtos" };
@@ -44,9 +44,16 @@ export default async function ProductsPage({ searchParams }: PageProps<"/produto
         description="Modelos comerciais. Cada modelo agrupa suas variações de tamanho e cor."
         action={
           canEdit && (
-            <Link href="/produtos/novo" className={buttonClass.primary}>
-              <Plus size={16} /> Novo produto
-            </Link>
+            <>
+              {canManageUsers(me.role) && (
+                <Link href="/produtos/importar" className={buttonClass.secondary}>
+                  <Upload size={16} /> Importar do ERP
+                </Link>
+              )}
+              <Link href="/produtos/novo" className={buttonClass.primary}>
+                <Plus size={16} /> Novo produto
+              </Link>
+            </>
           )
         }
       />

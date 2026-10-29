@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
-import { api, ApiError, publicPost } from "./api";
+import { api, ApiError, apiRaw, publicPost } from "./api";
 import { clearSession, setSession } from "./session";
 import type {
   FormState,
@@ -426,4 +426,101 @@ export async function updateUser(
 
   revalidatePath("/usuarios");
   return { success: "Usuário atualizado." };
+}
+
+// ---------- Importação do estoque do ERP ----------
+
+export interface ImportIssue {
+  line?: number;
+  sku?: string;
+  message: string;
+}
+
+export interface ImportPreview {
+  fileHash: string;
+  reportDate: string | null;
+  store: string | null;
+  columns: string[];
+  canImport: boolean;
+  totals: {
+    rows: number;
+    models: number;
+    variants: number;
+    pieces: number;
+    reportTotal: number | null;
+    withStock: number;
+    zero: number;
+    negative: number;
+    priceOverrides: number;
+    withoutPrice: number;
+    withoutCost: number;
+    suppliers: number;
+  };
+  categories: { name: string; models: number }[];
+  normalizations: { field: string; from: string; to: string; count: number }[];
+  warnings: ImportIssue[];
+  warningCount: number;
+  errors: ImportIssue[];
+  errorCount: number;
+  sample: {
+    reference: string;
+    name: string;
+    category: string | null;
+    supplier: string | null;
+    salePrice: string;
+    variants: { sku: string; size: string; color: string; quantity: number }[];
+  }[];
+}
+
+export interface ImportResult {
+  operation: { id: string; number: number };
+  products: number;
+  variants: number;
+  pieces: number;
+  categoriesCreated: number;
+  suppliersCreated: number;
+}
+
+type ImportResponse<T> = { data: T } | { error: string; errors?: ImportIssue[] };
+
+// Repassa a planilha à API como multipart. A API confere o login e o papel.
+async function sendReport<T>(
+  path: string,
+  formData: FormData,
+  fields: Record<string, string> = {},
+): Promise<ImportResponse<T>> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Escolha o relatório (.xls ou .xlsx)." };
+  }
+  const body = new FormData();
+  body.set("file", file, file.name);
+  for (const [key, value] of Object.entries(fields)) body.set(key, value);
+
+  let res: Response;
+  try {
+    res = await apiRaw(path, { method: "POST", body });
+  } catch (error) {
+    return { error: failure(error).error ?? "Erro inesperado." };
+  }
+  const data = (await res.json().catch(() => null)) as
+    | (T & { message?: string | string[]; errors?: ImportIssue[] })
+    | null;
+  if (res.status === 413) return { error: "Arquivo grande demais (máximo de 10 MB)." };
+  if (res.status === 403) return { error: "Só o administrador pode importar o estoque." };
+  if (!res.ok || !data) {
+    const message = Array.isArray(data?.message) ? data.message.join("; ") : data?.message;
+    return { error: message ?? "Não foi possível ler o relatório.", errors: data?.errors };
+  }
+  return { data };
+}
+
+export async function previewImport(formData: FormData) {
+  return sendReport<ImportPreview>("/products/import/preview", formData);
+}
+
+export async function confirmImport(formData: FormData, fileHash: string) {
+  const result = await sendReport<ImportResult>("/products/import", formData, { fileHash });
+  if ("data" in result) revalidateStock();
+  return result;
 }

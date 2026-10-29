@@ -22,9 +22,9 @@ const nextConfig: NextConfig = {
   turbopack: { root: monorepoRoot },
   poweredByHeader: false,
   experimental: {
-    // Importação de produtos: planilha de até 5 MB (a API tem o mesmo limite),
-    // com folga para o envelope do formulário.
-    serverActions: { bodySizeLimit: "6mb" },
+    // Importação do relatório de estoque do ERP: até 10 MB (o mesmo limite
+    // da API), com folga para o envelope do formulário.
+    serverActions: { bodySizeLimit: "11mb" },
   },
   async headers() {
     return [
