@@ -10,7 +10,7 @@ estornos e o histórico completo, com acesso por perfil.
 | `apps/api` | NestJS 11, Prisma 7, PostgreSQL 17 |
 | `apps/web` | Next.js 16 (App Router, Server Actions), React 19, Tailwind 4, Lucide, Montserrat |
 | Banco | Postgres no Docker (`docker-compose.yml`, porta **5434**) |
-| Produção | Docker Compose com Caddy e backups — ver [DEPLOY.md](DEPLOY.md) |
+| Produção | Docker Compose com Caddy e backups; banco no próprio servidor ou no Neon (Postgres gerenciado, São Paulo) — ver [DEPLOY.md](DEPLOY.md) |
 
 ## Como rodar (desenvolvimento)
 
@@ -48,7 +48,8 @@ dados de `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` (12+ caracteres) e
 | `pnpm db:up` | Sobe o Postgres no Docker |
 | `pnpm build` | Build de produção das duas apps |
 | `pnpm --filter api test` | Testes unitários (regras de estoque) |
-| `pnpm --filter api test:e2e` | Testes de ponta a ponta da API (precisa do Docker) |
+| `pnpm --filter api test:e2e` | Testes de ponta a ponta da API (precisa do Postgres local: `pnpm db:up`; recusam banco fora da máquina) |
+| `pnpm --filter web test` | Testes do web (funções puras, com `node --test`) |
 | `pnpm --filter api db:seed` | Cria o primeiro administrador |
 | `pnpm --filter api prisma:studio` | Abre o Prisma Studio |
 | `pnpm --filter web lint` | Lint do web |
@@ -83,7 +84,7 @@ automaticamente; o banco de desenvolvimento nunca é tocado.
 | Perda/avaria | subtrai (motivo obrigatório) | Gerente, administrador |
 | Ajuste de inventário | define o saldo pela contagem (motivo obrigatório) | Gerente, administrador |
 | Estorno | desfaz outra operação (motivo obrigatório) | Gerente, administrador |
-| Carga inicial | soma | Reservado para a importação (ainda não implementada) |
+| Carga inicial | soma | Só pela importação do relatório do ERP (administrador) |
 
 ## Regras de estoque
 
@@ -123,6 +124,7 @@ papéis permitidos); a interface só esconde o que o perfil não pode usar.
 ## Telas
 
 `/dashboard`, `/estoque`, `/produtos` (`/novo`, `/[id]`, `/[id]/editar`),
+`/produtos/importar` (carga inicial pelo relatório do ERP, com prévia),
 `/movimentacoes/nova`, `/movimentacoes` (histórico com filtros e exportação
 CSV), `/movimentacoes/[id]` (operação com itens e estorno), `/categorias`,
 `/usuarios`, `/configuracoes` (dados da loja e backup em .xlsx), `/conta`.
@@ -130,7 +132,8 @@ CSV), `/movimentacoes/[id]` (operação com itens e estorno), `/categorias`,
 ## API
 
 Prefixo `/api`. Todas as rotas exigem `Authorization: Bearer <token>`, exceto
-login, recuperação de senha e `GET /api/health`. Sem token: 401; papel sem
+login, recuperação de senha, `GET /api/health` (confere o banco; para
+monitores) e `GET /api/health/live` (só a API; para o Docker). Sem token: 401; papel sem
 permissão: 403; validação: 400; inexistente: 404; duplicado ou em uso: 409.
 
 | Método | Rota | Descrição |
@@ -146,6 +149,7 @@ permissão: 403; validação: 400; inexistente: 404; duplicado ou em uso: 409.
 | GET | `/suppliers` | Fornecedores |
 | GET/POST, GET/PATCH/DELETE | `/products`, `/products/:id` | Modelos com variações |
 | POST | `/products/:id/variants` | Nova variação |
+| POST | `/products/import/preview` · `/products/import` | Prévia e confirmação da carga inicial pelo relatório do ERP (só administrador) |
 | GET | `/variants` | Consulta de estoque por SKU (`search`, `categoryId`, `size`, `color`, `status`, `sort`, `page`) |
 | GET | `/variants/attributes` | Tamanhos e cores cadastrados |
 | PATCH/DELETE | `/variants/:id` | Edita, desativa ou exclui variação |
@@ -159,15 +163,16 @@ permissão: 403; validação: 400; inexistente: 404; duplicado ou em uso: 409.
 `apps/api/.env` — ver `apps/api/.env.example`: `DATABASE_URL`, `JWT_SECRET`
 (obrigatória), `WEB_URL`, `AUTH_RATE_LIMIT`, `RESEND_API_KEY`/`MAIL_FROM`
 (e-mail de recuperação de senha; sem chave, o e-mail sai no terminal da API),
-`SENTRY_DSN` e `SEED_*`.
+`SENTRY_DSN` e `SEED_*`. Com banco gerenciado (Neon), a conexão direta para
+as migrations vai em `DIRECT_URL` ou `DATABASE_URL_UNPOOLED` (ver DEPLOY.md).
 
 `apps/web/.env.local` (opcional): `API_URL` (padrão `http://localhost:3333/api`).
 
 ## Ainda não tem
 
-- **Importação das planilhas do ERP** (`estoque final do dia`): aguarda as
-  decisões do diagnóstico (saldos negativos, categorias, grafias). Será feita
-  com prévia e aprovação antes de gravar.
-- Seed do administrador dentro da imagem Docker de produção (hoje o seed roda
-  com `tsx`, que só existe no ambiente de desenvolvimento).
+- **Atualização periódica pelo ERP:** a importação serve só para a carga
+  inicial (recusa SKUs que já existem). Como o sistema convive com o caixa do
+  ERP ainda é uma decisão pendente.
 - Integração com caixa/emissão fiscal (fora do escopo desta versão).
+- A planilha de vendas do ERP (`vendas por cupom`) não é importada: tem CPF e
+  celular de clientes, que o controle de estoque não precisa.
