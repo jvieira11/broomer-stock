@@ -9,5 +9,9 @@
     "dev:api": "pnpm --filter api dev",
     "build": "pnpm --recursive build",
     "db:up": "docker compose up -d postgres"
+  },
+  "devDependencies": {
+    "@neon/config": "^1.9.5",
+    "@neon/env": "^1.6.6"
   }
 }
