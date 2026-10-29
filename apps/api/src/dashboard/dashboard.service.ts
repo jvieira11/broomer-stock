@@ -84,17 +84,19 @@ export class DashboardService {
         FROM product_variants v
         JOIN products p ON p.id = v.product_id
         WHERE v.organization_id = ${org} AND v.active AND p.active`,
-      // Entradas de mercadoria e vendas do período. Estornos são contados à
-      // parte, sem descontar dos totais, para não esconder o que aconteceu.
+      // Entradas de mercadoria e vendas do período. Operações estornadas
+      // (r.id preenchido) não contam: uma venda cancelada não é venda. Os
+      // estornos aparecem só na contagem à parte.
       this.prisma.$queryRaw<Flows[]>`
         SELECT
-          COALESCE(SUM(m.quantity) FILTER (WHERE o.type = 'ENTRY'), 0)::int AS entries,
-          COALESCE(-SUM(m.quantity) FILTER (WHERE o.type = 'SALE'), 0)::int AS sales,
-          COUNT(DISTINCT o.id) FILTER (WHERE o.type = 'SALE')::int AS sale_operations,
-          COALESCE(-SUM(m.quantity) FILTER (WHERE o.type IN ('LOSS', 'SUPPLIER_RETURN')), 0)::int AS other_out,
+          COALESCE(SUM(m.quantity) FILTER (WHERE o.type = 'ENTRY' AND r.id IS NULL), 0)::int AS entries,
+          COALESCE(-SUM(m.quantity) FILTER (WHERE o.type = 'SALE' AND r.id IS NULL), 0)::int AS sales,
+          COUNT(DISTINCT o.id) FILTER (WHERE o.type = 'SALE' AND r.id IS NULL)::int AS sale_operations,
+          COALESCE(-SUM(m.quantity) FILTER (WHERE o.type IN ('LOSS', 'SUPPLIER_RETURN') AND r.id IS NULL), 0)::int AS other_out,
           COUNT(DISTINCT o.id) FILTER (WHERE o.type = 'REVERSAL')::int AS reversals
         FROM stock_operations o
         JOIN stock_movements m ON m.operation_id = o.id
+        LEFT JOIN stock_operations r ON r.reversed_operation_id = o.id
         WHERE o.organization_id = ${org}
           AND o.occurred_at >= ${gte} AND o.occurred_at < ${lt}`,
       // Peças que entraram e saíram por dia, de qualquer operação.
@@ -108,7 +110,7 @@ export class DashboardService {
           AND o.occurred_at >= ${gte} AND o.occurred_at < ${lt}
         GROUP BY 1
         ORDER BY 1`,
-      // Modelos com mais peças registradas como venda no período.
+      // Modelos com mais peças vendidas no período, sem as vendas estornadas.
       this.prisma.$queryRaw<
         { id: string; reference: string; name: string; sold: number }[]
       >`
@@ -118,6 +120,9 @@ export class DashboardService {
         JOIN product_variants v ON v.id = m.variant_id
         JOIN products p ON p.id = v.product_id
         WHERE o.organization_id = ${org} AND o.type = 'SALE'
+          AND NOT EXISTS (
+            SELECT 1 FROM stock_operations r WHERE r.reversed_operation_id = o.id
+          )
           AND o.occurred_at >= ${gte} AND o.occurred_at < ${lt}
         GROUP BY p.id
         ORDER BY sold DESC, p.name
