@@ -14,9 +14,8 @@ services:
     dockerContext: .
     healthCheckPath: /api/health/live
     autoDeployTrigger: off # só atualiza quando você mandar (Manual Deploy)
-    # Plano gratuito não tem terminal: além das migrations, cria o
-    # administrador da demonstração ao subir (não faz nada se já existe).
-    dockerCommand: sh -c "node_modules/.bin/prisma migrate deploy && node dist/scripts/create-admin.js && exec node dist/main.js"
+    # Plano gratuito não tem terminal: o CMD do Dockerfile aplica as migrations
+    # e cria o administrador (SEED_ADMIN_*) ao subir; não faz nada se já existe.
     envVars:
       - key: PORT
         value: "3333"
