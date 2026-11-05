@@ -62,6 +62,7 @@ export function Card({
   children,
   className = "",
   flush = false,
+  visible = false,
 }: {
   title?: ReactNode;
   description?: ReactNode;
@@ -70,10 +71,12 @@ export function Card({
   className?: string;
   // Sem padding interno (tabelas encostadas na borda).
   flush?: boolean;
+  // Não recorta o conteúdo (listas suspensas que passam da borda do cartão).
+  visible?: boolean;
 }) {
   return (
     <section
-      className={`min-w-0 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xs ${className}`}
+      className={`min-w-0 ${visible ? "" : "overflow-hidden"} rounded-xl border border-neutral-200 bg-white shadow-xs ${className}`}
     >
       {title && (
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 px-5 py-3.5">
@@ -229,7 +232,7 @@ export function Table({
         <thead className="border-b border-neutral-200 bg-neutral-50 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
           <tr>
             {head.map((h, i) => (
-              <th key={i} className="whitespace-nowrap px-4 py-3">
+              <th key={i} className="whitespace-nowrap px-3 py-3">
                 {h}
               </th>
             ))}
@@ -241,7 +244,7 @@ export function Table({
   );
 }
 
-export const cellClass = "whitespace-nowrap px-4 py-3";
+export const cellClass = "whitespace-nowrap px-3 py-3";
 export const rowClass = "transition hover:bg-neutral-50";
 
 // Paginação por links: mantém os filtros da página na URL.

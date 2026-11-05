@@ -5,7 +5,7 @@ import { updateUser } from "@/lib/actions";
 import { safeCall } from "@/lib/network";
 import { roleLabels } from "@/lib/permissions";
 import type { FormState, Role, User } from "@/lib/types";
-import { Badge, buttonClass, cellClass, inputClass } from "./ui";
+import { Badge, buttonClass, cellClass } from "./ui";
 import { ROLES } from "./user-form";
 
 export function UserRow({ user, isSelf }: { user: User; isSelf: boolean }) {
@@ -45,7 +45,7 @@ export function UserRow({ user, isSelf }: { user: User; isSelf: boolean }) {
             value={user.role}
             disabled={pending}
             onChange={(e) => save({ role: e.target.value as Role })}
-            className={`${inputClass} w-auto py-1`}
+            className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-sm text-ink-900 outline-none focus-visible:border-ink-800 disabled:bg-neutral-100"
           >
             {ROLES.map((role) => (
               <option key={role} value={role}>

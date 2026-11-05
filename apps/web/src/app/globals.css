@@ -33,4 +33,10 @@
   table {
     font-variant-numeric: tabular-nums;
   }
+
+  /* A lista aberta dos selects usa a fonte do site, não a padrão do navegador. */
+  select,
+  option {
+    font-family: inherit;
+  }
 }

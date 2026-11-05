@@ -266,6 +266,7 @@ export function OperationForm({
         </Card>
 
         <Card
+          visible
           title="Peças"
           description={isInventory ? "Informe a contagem real de cada SKU." : "Busque pelo nome, referência ou bipe o código de barras."}
         >
