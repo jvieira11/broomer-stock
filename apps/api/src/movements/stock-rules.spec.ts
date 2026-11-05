@@ -18,6 +18,18 @@ const asText = (change: StockChange) => ({
 });
 
 describe('applyMovement', () => {
+  it('entrada não pode levar o saldo acima do limite (inteiro de 32 bits)', () => {
+    expect(
+      applyMovement(state(1_999_999_999), MovementType.IN, 1).balanceAfter,
+    ).toBe(2_000_000_000);
+    expect(() =>
+      applyMovement(state(2_000_000_000), MovementType.IN, 1),
+    ).toThrow(/saldo não pode passar de 2\.000\.000\.000/);
+    expect(() =>
+      applyMovement(state(2_000_000_000), MovementType.IN, 200_000_000),
+    ).toThrow(BadRequestException);
+  });
+
   it('entrada soma ao saldo e recalcula o custo médio', () => {
     // (10 x 5 + 10 x 7) / 20 = 6
     expect(

@@ -154,3 +154,40 @@ describe('parseErpStockReport', () => {
     expect(() => parseErpStockReport(Buffer.from('não é planilha'))).toThrow();
   });
 });
+
+describe('limite de quantidade na planilha do ERP', () => {
+  it('recusa saldo acima do limite em vez de estourar o banco', () => {
+    const report = parseErpStockReport(
+      erpReport([
+        [
+          '0001000000001',
+          'CAMISA LIMITE',
+          'FORN',
+          'M',
+          '2026',
+          'AZUL',
+          100,
+          'SLIM',
+          3_000_000_000,
+          10,
+        ],
+        [
+          '0001000000002',
+          'CAMISA LIMITE',
+          'FORN',
+          'G',
+          '2026',
+          'AZUL',
+          100,
+          'SLIM',
+          5,
+          10,
+        ],
+      ]),
+    );
+    expect(report.errors.map((e) => e.message).join(' ')).toMatch(
+      /acima do limite/,
+    );
+    expect(report.errors).toHaveLength(1);
+  });
+});

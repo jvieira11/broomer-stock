@@ -1,12 +1,14 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { SanitizeInputPipe } from './common/sanitize-input.pipe';
 import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 
 export function configureApp(app: INestApplication) {
   app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
+    new SanitizeInputPipe(),
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,

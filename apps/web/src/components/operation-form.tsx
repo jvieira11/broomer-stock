@@ -41,6 +41,9 @@ interface Item {
   unitCost: string;
 }
 
+// Mesmo limite da API (apps/api/src/common/limits.ts): avisa antes de enviar.
+const MAX_QUANTITY = 1_000_000;
+
 const newKey = () => crypto.randomUUID();
 
 // A chave de repetição não muda ao tentar de novo: se o pedido chegou ao
@@ -138,6 +141,8 @@ export function OperationForm({
       const name = `${item.variant.product.name} (${variantLabel(item.variant)})`;
       if (!Number.isInteger(quantity) || quantity < (isInventory ? 0 : 1)) {
         list.push(`${name}: quantidade inválida.`);
+      } else if (quantity > MAX_QUANTITY) {
+        list.push(`${name}: o máximo é ${MAX_QUANTITY.toLocaleString("pt-BR")} por item.`);
       } else if (isOut && quantity > item.variant.quantity) {
         list.push(`${name}: saldo disponível é ${item.variant.quantity}.`);
       } else if (isInventory && quantity === item.variant.quantity) {

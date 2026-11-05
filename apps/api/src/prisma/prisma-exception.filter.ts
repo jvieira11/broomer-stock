@@ -17,6 +17,12 @@ const ERRORS: Record<string, { status: HttpStatus; message: string }> = {
     message: 'Registro relacionado inexistente ou em uso',
   },
   P2025: { status: HttpStatus.NOT_FOUND, message: 'Registro não encontrado' },
+  // Valor maior do que a coluna comporta: a validação já barra os casos
+  // conhecidos; isto é a segunda camada.
+  P2020: {
+    status: HttpStatus.BAD_REQUEST,
+    message: 'Um dos valores está fora do limite permitido',
+  },
 };
 
 @Catch(Prisma.PrismaClientKnownRequestError)

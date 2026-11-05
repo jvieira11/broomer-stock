@@ -13,10 +13,12 @@ import {
   IsUUID,
   Matches,
   MaxLength,
+  Max,
   Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { fmt, MAX_MONEY, MAX_QUANTITY } from '../../common/limits';
 import { PageQueryDto, toBoolean } from '../../common/query';
 
 const trim = ({ value }: { value: unknown }) =>
@@ -61,6 +63,7 @@ export class CreateVariantDto {
   @ValidateIf((_, value) => value !== null)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(MAX_MONEY, { message: `O preço máximo é R$ ${fmt(MAX_MONEY)}` })
   salePrice?: number | null;
 
   // null = usa o mínimo do modelo.
@@ -68,6 +71,9 @@ export class CreateVariantDto {
   @ValidateIf((_, value) => value !== null)
   @IsInt()
   @Min(0)
+  @Max(MAX_QUANTITY, {
+    message: `O estoque mínimo máximo é ${fmt(MAX_QUANTITY)}`,
+  })
   minQuantity?: number | null;
 }
 
@@ -115,14 +121,18 @@ export class CreateProductDto {
   @MaxLength(150)
   supplierName?: string | null;
 
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @ValidateIf((_, value) => value !== undefined)
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'Preço de venda inválido' })
   @Min(0)
+  @Max(MAX_MONEY, { message: `O preço máximo é R$ ${fmt(MAX_MONEY)}` })
   salePrice?: number;
 
-  @IsOptional()
-  @IsInt()
+  @ValidateIf((_, value) => value !== undefined)
+  @IsInt({ message: 'Estoque mínimo inválido' })
   @Min(0)
+  @Max(MAX_QUANTITY, {
+    message: `O estoque mínimo máximo é ${fmt(MAX_QUANTITY)}`,
+  })
   minQuantity?: number;
 
   @IsOptional()

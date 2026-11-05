@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import * as XLSX from 'xlsx';
+import { fmt, MAX_BALANCE } from '../../common/limits';
 
 // Leitura do relatório "ESTOQUE FINAL DO DIA" exportado pelo ERP da loja
 // (.xls ou .xlsx). Uma linha por SKU; as colunas são localizadas pelo título,
@@ -323,6 +324,14 @@ export function parseErpStockReport(buffer: Buffer): ErpStockReport {
         line,
         sku,
         message: `Quantidade fracionada (${reportQuantity}): o sistema controla peças inteiras.`,
+      });
+      return;
+    }
+    if (reportQuantity > MAX_BALANCE) {
+      errors.push({
+        line,
+        sku,
+        message: `Quantidade acima do limite (${fmt(MAX_BALANCE)} peças): confira a planilha.`,
       });
       return;
     }

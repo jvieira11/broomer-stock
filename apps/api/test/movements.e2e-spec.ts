@@ -402,6 +402,37 @@ describe('Operações de estoque (e2e)', () => {
     expect(await balance(M_PRETO)).toBe(5);
   });
 
+  it('recusa valores fora do limite e texto inválido com 400, nunca 500', async () => {
+    const one = (extra: Record<string, unknown> = {}) => [
+      { variantId: variantId(M_PRETO), quantity: 1, ...extra },
+    ];
+    // Quantidade e custo acima do limite (o banco guarda só 32 bits).
+    for (const quantity of [1_000_001, 2_147_483_648, 1e10]) {
+      const res = await operate(admin.api, 'ENTRY', one({ quantity })).expect(
+        400,
+      );
+      expect(JSON.stringify(res.body)).not.toMatch(/Prisma|P20\d\d/);
+    }
+    for (const unitCost of [null, 1_000_001, 1e11, 1e20]) {
+      await operate(admin.api, 'ENTRY', one({ unitCost })).expect(400);
+    }
+    // Texto com caractere nulo, na operação e na busca.
+    await operate(admin.api, 'LOSS', one(), { reason: 'a\u0000b' }).expect(400);
+    await admin.api.get('/api/variants?search=a%00b').expect(400);
+    // JSON com níveis demais.
+    let deep: object = {};
+    for (let i = 0; i < 5000; i++) deep = { a: deep };
+    await admin.api.post('/api/operations', deep).expect(400);
+    expect(await balance(M_PRETO)).toBe(0);
+    // Os limites exatos continuam valendo.
+    await operate(
+      admin.api,
+      'ENTRY',
+      one({ quantity: 1_000_000, unitCost: 1_000_000 }),
+    ).expect(201);
+    expect(await balance(M_PRETO)).toBe(1_000_000);
+  });
+
   it('desativar o produto bloqueia movimentações e preserva o histórico', async () => {
     await enter(M_PRETO, 5);
     await admin.api

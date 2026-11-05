@@ -210,6 +210,18 @@ export class ProductsService {
 
   async update(user: AuthUser, id: string, dto: UpdateProductDto) {
     await this.findOne(user, id);
+    // O PartialType do DTO trata null como "campo ausente" e pula a validação,
+    // mas estas colunas são obrigatórias: sem isto, null viraria erro 500.
+    const nulls = dto as {
+      salePrice?: number | null;
+      minQuantity?: number | null;
+    };
+    if (nulls.salePrice === null) {
+      throw new BadRequestException('Informe o preço de venda');
+    }
+    if (nulls.minQuantity === null) {
+      throw new BadRequestException('Informe o estoque mínimo');
+    }
     const { supplierName, ...data } = dto;
     await this.ensureCategory(user, dto.categoryId);
 

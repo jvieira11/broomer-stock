@@ -12,11 +12,14 @@ import {
   IsString,
   IsUUID,
   Length,
+  Max,
   MaxLength,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { OperationType } from '../../generated/prisma/client';
+import { fmt, MAX_MONEY, MAX_QUANTITY } from '../../common/limits';
 import { PeriodQueryDto } from '../../common/query';
 
 const trim = ({ value }: { value: unknown }) =>
@@ -43,12 +46,19 @@ export class OperationItemDto {
   // Ajuste de inventário: a contagem real (pode ser 0).
   @IsInt({ message: 'A quantidade deve ser um número inteiro' })
   @Min(0)
+  @Max(MAX_QUANTITY, {
+    message: `A quantidade máxima por item é ${fmt(MAX_QUANTITY)}`,
+  })
   quantity: number;
 
   // Só em entradas: custo pago por peça. Sem ele, usa o custo médio atual.
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 4 })
+  // null não é aceito: ou o custo vem, ou o campo é omitido.
+  @ValidateIf((_, value) => value !== undefined)
+  @IsNumber({ maxDecimalPlaces: 4 }, { message: 'Custo unitário inválido' })
   @Min(0)
+  @Max(MAX_MONEY, {
+    message: `O custo unitário máximo é R$ ${fmt(MAX_MONEY)}`,
+  })
   unitCost?: number;
 }
 

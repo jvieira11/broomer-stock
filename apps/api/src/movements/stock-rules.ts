@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { fmt, MAX_BALANCE } from '../common/limits';
 import {
   MovementType,
   OperationType,
@@ -84,6 +85,11 @@ export function applyMovement(
     case MovementType.IN: {
       const cost = unitCost ?? current.averageCost;
       const balanceAfter = balanceBefore + quantity;
+      if (balanceAfter > MAX_BALANCE) {
+        throw new BadRequestException(
+          `O saldo não pode passar de ${fmt(MAX_BALANCE)} peças (ficaria ${fmt(balanceAfter)})`,
+        );
+      }
       // Com saldo zerado, o custo médio passa a ser o da entrada.
       const averageCost =
         balanceBefore <= 0

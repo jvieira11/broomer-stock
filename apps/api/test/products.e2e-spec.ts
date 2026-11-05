@@ -168,6 +168,63 @@ describe('Produtos e variações (e2e)', () => {
       .expect(400);
   });
 
+  it('recusa preço, estoque mínimo e texto fora do limite com 400, nunca 500', async () => {
+    const base = { name: 'Limites' };
+    let n = 0;
+    const ref = () => `LIM${++n}`;
+    for (const extra of [
+      { salePrice: null },
+      { salePrice: 1_000_001 },
+      { salePrice: 1e12 },
+      { minQuantity: null },
+      { minQuantity: 1_000_001 },
+      { minQuantity: 2_147_483_648 },
+      { name: 'a\u0000b' },
+      { description: 'a\u0000b' },
+    ]) {
+      const res = await admin.api
+        .post('/api/products', { reference: ref(), ...base, ...extra })
+        .expect(400);
+      expect(JSON.stringify(res.body)).not.toMatch(/Prisma|P20\d\d/);
+    }
+    // Os limites exatos continuam valendo.
+    const ok = await admin.api
+      .post('/api/products', {
+        reference: ref(),
+        ...base,
+        salePrice: 1_000_000,
+        minQuantity: 1_000_000,
+      })
+      .expect(201);
+    const id = (ok.body as { id: string }).id;
+    // Na edição também: null e valores absurdos não viram erro 500.
+    for (const patch of [
+      { salePrice: null },
+      { salePrice: 1e12 },
+      { minQuantity: null },
+      { minQuantity: 2_147_483_648 },
+    ]) {
+      await admin.api.patch(`/api/products/${id}`, patch).expect(400);
+    }
+    // Variação: preço e mínimo próprios também têm limite (null = usa o do modelo).
+    await admin.api
+      .post(`/api/products/${id}/variants`, { sku: 'LIM-V1', salePrice: 1e12 })
+      .expect(400);
+    await admin.api
+      .post(`/api/products/${id}/variants`, {
+        sku: 'LIM-V2',
+        minQuantity: 2_147_483_648,
+      })
+      .expect(400);
+    await admin.api
+      .post(`/api/products/${id}/variants`, {
+        sku: 'LIM-V3',
+        salePrice: null,
+        minQuantity: null,
+      })
+      .expect(201);
+  });
+
   it('valida campos obrigatórios, números e ids', async () => {
     await admin.api
       .post('/api/products', { name: 'Sem referência' })
