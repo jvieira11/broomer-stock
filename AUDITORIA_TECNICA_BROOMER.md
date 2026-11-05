@@ -9,6 +9,21 @@
 
 ---
 
+## Atualização — status das correções (05/11/2026)
+
+O texto abaixo é o registro da auditoria **como foi feita**. Estas são as correções já aplicadas na `main`, com a verificação de cada uma:
+
+| Achado | Status | O que foi feito e como foi verificado |
+|---|---|---|
+| **F-01** Next.js vulnerável | **Corrigido** (commit `d818fd5`, na `main` desde `8466471`) | `pnpm audit --prod` na `main`: de 5 críticas e 3 altas para 3 moderadas indiretas. CI verde. |
+| **F-02** Queda de rede derruba o formulário | **Corrigido** (`aefaec8`) | `safeCall` converte só falhas de rede em aviso e foi aplicado aos 9 pontos que chamam ações do servidor e ao `useFormAction`. No navegador: sem internet e com resposta perdida, o formulário e os dados foram mantidos; confirmar de novo **não duplicou** (8/8). 9 testes unitários novos. |
+| **F-04** Validação de limites e nulos | **Corrigido** (`8c64587`) | Limites nos campos numéricos, `null` recusado, filtro global de entrada (caractere nulo e aninhamento), `P2020` → 400, limite na planilha do ERP e aviso na tela. A bateria hostil original (384 requisições) foi de 3 reprovações para **0 anomalias**; testes unitários 49→55, ponta a ponta 75→77; regressões de estoque, quedas, permissões, isolamento e painel sem mudança. |
+| **F-03** Proteção contra perda de dados no Neon | **Parcial** | Feito: backups do Neon de 6 em 6 h (antes, diários) e procedimento de ensaio de restauração e de proteção documentados no `DEPLOY.md`. **Pendente, depende de você ou de infraestrutura:** o plano gratuito do Neon **não permite branch protegida** (a API recusou; nada foi alterado) nem mais de 6 h de restauração; e o ensaio de restauração só pode ser feito com o sistema no ar. |
+
+Os demais achados (F-05 a F-30) seguem como descritos abaixo.
+
+---
+
 ## A. Resumo executivo
 
 **Estado geral.** O Broomer Estoque é um sistema **bem construído no que mais importa: a integridade do estoque.** Em todos os testes agressivos que apliquei (vendas simultâneas, repetição de pedidos, estornos simultâneos, derrubada forçada da API e do banco no meio de vendas), **o saldo no banco bateu exatamente com a soma independente das movimentações, nunca ficou negativo e nenhuma venda ficou pela metade.** As permissões são aplicadas na API (160 combinações de rota × perfil conferidas sem divergência), as lojas são isoladas entre si e nenhum XSS executou em 15 telas.

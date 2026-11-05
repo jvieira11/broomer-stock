@@ -241,8 +241,12 @@ o `--env-file` (`-f docker-compose.neon.yml --env-file .env.neon`).
 
 São três camadas:
 
-1. **Restauração do Neon** a um ponto no tempo (a janela depende do plano).
-2. **`pg_dump` diário** do serviço `backup`, em `./backups` no servidor.
+1. **Restauração do Neon** a um ponto no tempo. A janela depende do plano: no
+   gratuito são **6 horas** (conferido no projeto da Broomer). Um erro
+   percebido depois disso só se recupera pelos dumps.
+2. **`pg_dump` de 6 em 6 horas** do serviço `backup`, em `./backups` no
+   servidor (`BACKUP_INTERVAL_SECONDS=21600`). Assim, no pior caso, perdem-se
+   6 h de dados, e não 24 h.
 3. **Cópia externa** desses arquivos pelo serviço `offsite` (rclone), sem
    cron no servidor:
    1. Crie um bucket no Cloudflare R2 (ou Backblaze B2) e uma chave com
@@ -259,6 +263,35 @@ O teste mensal (`verify-latest.sh`) funciona igual, trocando o arquivo de
 compose e o `--env-file` no comando. Ele cria e apaga um banco temporário no
 próprio projeto do Neon.
 
+### Ensaio de restauração (uma vez, antes de usar dados reais)
+
+Backup que nunca foi restaurado é só uma esperança. Com o sistema no ar e pelo
+menos um dump em `./backups`:
+
+1. Rode o teste de restauração (carrega o dump mais recente num banco
+   temporário do projeto, compara as contagens com a produção e apaga o
+   temporário; não toca na produção):
+
+   ```bash
+   docker compose -f docker-compose.neon.yml --env-file .env.neon \
+     exec backup sh /scripts/verify-latest.sh
+   ```
+
+   Esperado: `OK: o backup restaura corretamente.`
+2. Confira também o outro caminho, a restauração do próprio Neon: no painel,
+   **Restore** da branch `production` para um horário de 1 a 2 horas atrás,
+   **sempre numa branch nova** (nunca por cima da produção), e abra o sistema
+   apontando para ela só para conferir.
+3. Anote a data do ensaio. Repita a cada mês.
+
+### Proteção contra exclusão da branch de produção
+
+O Neon protege a branch contra exclusão e reset, mas o plano gratuito **não
+oferece** isso (limite de 0 branches protegidas). Enquanto for o gratuito:
+a chave de API do Neon fica só no ambiente de quem administra, a conta usa
+2FA, e os dumps de 6 em 6 horas com cópia externa são a rede de segurança. Ao
+migrar para um plano pago, proteja a branch `production` (Branches → Protect).
+
 **Para restaurar, não use o `restore.sh` direto na produção.** Restaure numa
 branch nova do Neon (pelo painel, a um ponto no tempo, ou com `pg_restore` de
 um dump numa branch vazia), confira os dados e só então troque os hosts do
@@ -266,6 +299,7 @@ um dump numa branch vazia), confira os dados e só então troque os hosts do
 
 ## Checklist antes de usar em produção
 
+- [ ] Se for usar o Neon: ensaio de restauração feito e anotado (seção "Ensaio de restauração")
 - [ ] `.env.production` com senhas geradas e `chmod 600`
 - [ ] Primeiro administrador criado pelo seed e senha trocada no primeiro acesso
 - [ ] HTTPS funcionando no domínio
