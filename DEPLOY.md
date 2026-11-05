@@ -193,6 +193,15 @@ produção: uma branch `demo` no Neon. Nunca use a branch `production`.
    DEMO_API_URL=https://broomer-demo-api.onrender.com/api DEMO_PASSWORD='a-mesma-senha-do-passo-3' node deploy/demo/seed.mjs
    ```
 
+   Para a demonstração do módulo de Compras (histórico, pedidos em vários status e
+   12 meses de vendas fictícias), rode depois, com os mesmos valores:
+
+   ```bash
+   DEMO_API_URL=https://broomer-demo-api.onrender.com/api DEMO_PASSWORD='a-mesma-senha-do-passo-3' node deploy/demo/seed-compras.mjs
+   ```
+
+   (retomável: se cair no meio, rode de novo; o arquivo `deploy/demo/vendas-ficticias.xlsx` é fictício e também pode ser importado pela tela Compras › Histórico de vendas.)
+
 6. Abra o endereço do web e entre com `demo@broomer.local` e a senha. Demais
    usuários da equipe fictícia: `marina@`, `rafael@` e `juliana@broomer.local`
    (mesma senha).
