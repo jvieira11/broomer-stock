@@ -11,6 +11,7 @@ import {
   previewImport,
 } from "@/lib/actions";
 import { formatCurrency, formatDate, formatQuantity } from "@/lib/format";
+import { safeCall } from "@/lib/network";
 import { ConfirmDialog } from "./confirm-dialog";
 import { Badge, buttonClass, Card, cellClass, Table } from "./ui";
 
@@ -58,7 +59,7 @@ export function ImportStock() {
     setError(null);
     setPreview(null);
     startTransition(async () => {
-      const response = await previewImport(formData());
+      const response = await safeCall(() => previewImport(formData()));
       if ("error" in response) setError({ message: response.error, issues: response.errors });
       else setPreview(response.data);
     });
@@ -67,7 +68,7 @@ export function ImportStock() {
   function runImport() {
     if (!preview) return;
     startTransition(async () => {
-      const response = await confirmImport(formData(), preview.fileHash);
+      const response = await safeCall(() => confirmImport(formData(), preview.fileHash));
       setConfirming(false);
       if ("error" in response) setError({ message: response.error, issues: response.errors });
       else setResult(response.data);

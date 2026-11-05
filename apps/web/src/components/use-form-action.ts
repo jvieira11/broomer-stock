@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
 } from "react";
+import { isNetworkError, NETWORK_ERROR } from "@/lib/network";
 import type { FormState } from "@/lib/types";
 
 // Como useActionState, mas o formulário só é limpo quando a ação dá certo.
@@ -15,8 +16,19 @@ import type { FormState } from "@/lib/types";
 export function useFormAction<S extends FormState = FormState>(
   action: (prev: S, formData: FormData) => Promise<S>,
 ) {
+  // Falha de rede vira mensagem no próprio formulário, que mantém o que foi digitado.
+  const safeAction = async (prev: S, formData: FormData): Promise<S> => {
+    try {
+      return await action(prev, formData);
+    } catch (error) {
+      if (isNetworkError(error)) {
+        return { ...prev, error: NETWORK_ERROR, success: undefined };
+      }
+      throw error;
+    }
+  };
   const [state, dispatch, pending] = useActionState<S, FormData>(
-    action,
+    safeAction,
     {} as Awaited<S>,
   );
   const formRef = useRef<HTMLFormElement>(null);

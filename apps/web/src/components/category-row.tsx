@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteCategory, setCategoryActive } from "@/lib/actions";
+import { safeCall } from "@/lib/network";
 import type { Category } from "@/lib/types";
 import { CategoryForm } from "./category-form";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -31,7 +32,7 @@ export function CategoryRow({
 
   function run(action: () => Promise<{ error?: string }>) {
     startTransition(async () => {
-      const result = await action();
+      const result = await safeCall(action);
       setError(result.error ?? "");
       setDialog(null);
     });

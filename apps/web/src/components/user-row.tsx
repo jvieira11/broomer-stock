@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateUser } from "@/lib/actions";
+import { safeCall } from "@/lib/network";
 import { roleLabels } from "@/lib/permissions";
 import type { FormState, Role, User } from "@/lib/types";
 import { Badge, buttonClass, cellClass, inputClass } from "./ui";
@@ -12,7 +13,7 @@ export function UserRow({ user, isSelf }: { user: User; isSelf: boolean }) {
   const [result, setResult] = useState<FormState>({});
 
   function save(changes: Parameters<typeof updateUser>[1]) {
-    startTransition(async () => setResult(await updateUser(user.id, changes)));
+    startTransition(async () => setResult(await safeCall(() => updateUser(user.id, changes))));
   }
 
   function resetPassword() {

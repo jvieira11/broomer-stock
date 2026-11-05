@@ -16,6 +16,7 @@ import {
   variantLabel,
 } from "@/lib/format";
 import type { OperationType, StockItem } from "@/lib/types";
+import { safeCall } from "@/lib/network";
 import { ConfirmDialog } from "./confirm-dialog";
 import {
   buttonClass,
@@ -41,6 +42,12 @@ interface Item {
 }
 
 const newKey = () => crypto.randomUUID();
+
+// A chave de repetição não muda ao tentar de novo: se o pedido chegou ao
+// servidor e só a resposta se perdeu, confirmar outra vez devolve a operação
+// já gravada em vez de criar uma segunda.
+const NETWORK_ERROR_OPERATION =
+  "Sem conexão com o servidor. O que você digitou foi mantido: confira a internet e confirme de novo. Se a operação já tiver sido gravada, ela não será duplicada.";
 
 // Converte o valor do <input type="datetime-local"> (horário de Maceió).
 const toIso = (local: string) => new Date(`${local}:00-03:00`).toISOString();
@@ -148,7 +155,7 @@ export function OperationForm({
   function submit() {
     setError("");
     startTransition(async () => {
-      const result = await createOperation({
+      const payload = {
         type,
         occurredAt: occurredAt ? toIso(occurredAt) : undefined,
         saleReference: type === "SALE" ? saleReference || undefined : undefined,
@@ -164,7 +171,11 @@ export function OperationForm({
               ? Number(i.unitCost.replace(",", "."))
               : undefined,
         })),
-      });
+      };
+      const result = await safeCall(
+        () => createOperation(payload),
+        NETWORK_ERROR_OPERATION,
+      );
       setConfirming(false);
       if ("error" in result) {
         setError(result.error);

@@ -11,6 +11,7 @@ import {
   updateVariant,
 } from "@/lib/actions";
 import { formatCurrency, formatUnitCost } from "@/lib/format";
+import { safeCall } from "@/lib/network";
 import type { FormState, ProductDetail, Variant } from "@/lib/types";
 import { ConfirmDialog } from "./confirm-dialog";
 import { FormMessage } from "./form-message";
@@ -32,7 +33,7 @@ export function ProductActions({ product }: { product: ProductDetail }) {
 
   function run(action: () => Promise<FormState>) {
     startTransition(async () => {
-      const result = await action();
+      const result = await safeCall(action);
       setState(result);
       setDialog(null);
     });
@@ -100,7 +101,7 @@ function VariantRow({
 
   function run(action: () => Promise<FormState>) {
     startTransition(async () => {
-      const result = await action();
+      const result = await safeCall(action);
       onResult(result);
       setConfirm(null);
       if (!result.error) setEditing(false);
@@ -238,7 +239,7 @@ function AddVariantForm({ productId, onResult }: { productId: string; onResult: 
       onSubmit={(e) => {
         e.preventDefault();
         startTransition(async () => {
-          const result = await addVariant(productId, values);
+          const result = await safeCall(() => addVariant(productId, values));
           onResult(result);
           if (!result.error) {
             setValues({ size: "", color: "", sku: "" });

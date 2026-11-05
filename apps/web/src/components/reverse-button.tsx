@@ -3,6 +3,7 @@
 import { Undo2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { reverseOperation } from "@/lib/actions";
+import { safeCall } from "@/lib/network";
 import { ConfirmDialog } from "./confirm-dialog";
 import { buttonClass, inputClass, labelClass } from "./ui";
 
@@ -20,7 +21,7 @@ export function ReverseButton({ id, number }: { id: string; number: number }) {
       return;
     }
     startTransition(async () => {
-      const result = await reverseOperation(id, reason.trim(), key);
+      const result = await safeCall(() => reverseOperation(id, reason.trim(), key));
       if (result?.error) setError(result.error);
     });
   }
