@@ -7,6 +7,7 @@ import {
   Plus,
   ShoppingCart,
   Snowflake,
+  TrendingUp,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -112,6 +113,11 @@ export default async function PurchasesDashboard() {
             <Link href="/compras/sugestoes" className={buttonClass.secondary}>
               <ShoppingCart size={16} /> Ver sugestões
             </Link>
+            {canCreate && (
+              <Link href="/compras/vendas" className={buttonClass.secondary}>
+                <TrendingUp size={16} /> Histórico de vendas
+              </Link>
+            )}
             {canCreate && (
               <Link href="/compras/pedidos/novo" className={buttonClass.primary}>
                 <Plus size={16} /> Novo pedido

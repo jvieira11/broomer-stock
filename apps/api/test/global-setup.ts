@@ -6,7 +6,7 @@ const CLEAR_DATA = `
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['purchase_order_items', 'purchase_orders', 'purchase_settings', 'stock_movements', 'stock_operations', 'product_variants', 'products', 'suppliers', 'categories', 'password_reset_tokens', 'users', 'organizations'] LOOP
+  FOREACH t IN ARRAY ARRAY['sale_lines', 'sales_imports', 'purchase_order_items', 'purchase_orders', 'purchase_settings', 'stock_movements', 'stock_operations', 'product_variants', 'products', 'suppliers', 'categories', 'password_reset_tokens', 'users', 'organizations'] LOOP
     IF to_regclass('public.' || t) IS NOT NULL THEN
       EXECUTE format('TRUNCATE TABLE %I CASCADE', t);
     END IF;

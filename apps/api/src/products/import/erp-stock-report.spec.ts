@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import { erpReport } from '../../../test/erp-report';
 import {
   categoryFromDescription,
@@ -189,5 +190,95 @@ describe('limite de quantidade na planilha do ERP', () => {
       /acima do limite/,
     );
     expect(report.errors).toHaveLength(1);
+  });
+});
+
+// Leiaute enxuto do ERP: sem as colunas COR e PÇ UNIT (relatório real de 2026).
+function reportWithoutColor(
+  rows: [
+    code: string,
+    description: string,
+    size: string,
+    quantity: number,
+    value: number,
+    cost: number,
+  ][],
+) {
+  const sheet = [
+    ['RELATÓRIO ESTOQUE FINAL DO DIA     DATA: 04/11/2026   HORA: 13:00'],
+    ['DIA: 31/10/2026          LOJA(S): 104 - BROOMER'],
+    [],
+    [],
+    [
+      'CÓDIGO',
+      'DESCRIÇÃO',
+      'FORNECEDOR - NOME FANTASIA',
+      'TAMANHO',
+      'COLEÇÃO',
+      'TQTDE',
+      'TVALOR',
+      'TCUSTO',
+    ],
+    ...rows.map(([code, description, size, quantity, value, cost]) => [
+      code,
+      description,
+      'FORN',
+      size,
+      '2026 VERAO',
+      quantity,
+      value,
+      cost,
+    ]),
+    ['TOTAL GERAL', null, null, null, null, rows.reduce((s, r) => s + r[3], 0)],
+  ];
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet(sheet), 'Sheet');
+  return XLSX.write(book, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+}
+
+describe('relatório sem a coluna COR', () => {
+  it('identifica a cor pelo código (dígitos 8 a 10) e avisa', () => {
+    const report = parseErpStockReport(
+      reportWithoutColor([
+        ['0002326215021', 'CAMISA LINHO', 'P', 2, 200, 80],
+        ['0002326215724', 'CAMISA LINHO', 'M', 1, 100, 40],
+        ['0002326224702', 'CAMISA LINHO', 'P', 3, 300, 120],
+      ]),
+    );
+    expect(report.errors).toEqual([]);
+    expect(report.models).toHaveLength(1);
+    const variants = report.models[0].variants;
+    expect(variants.map((v) => [v.size, v.color])).toEqual([
+      ['P', 'COR 215'],
+      ['M', 'COR 215'],
+      ['P', 'COR 224'],
+    ]);
+    // Sem PÇ UNIT, o preço sai de valor ÷ quantidade.
+    expect(variants[0].salePrice).toBe(100);
+    expect(report.columns).not.toContain('COR');
+    expect(report.warnings[0].message).toContain('não tem a coluna COR');
+  });
+
+  it('referência usada por produtos diferentes vira modelos separados, sem bloquear', () => {
+    const report = parseErpStockReport(
+      reportWithoutColor([
+        ['0099912150001', 'CAMISA TECH CHEVRON', 'P', 1, 100, 40],
+        ['0099912150002', 'CAMISA TECH CHEVRON', 'M', 1, 100, 40],
+        ['0099912230003', 'CAMISA MARINE LISA', 'P', 1, 120, 50],
+      ]),
+    );
+    expect(report.errors).toEqual([]);
+    expect(report.models.map((m) => [m.reference, m.name])).toEqual([
+      ['0099912', 'CAMISA TECH CHEVRON'],
+      ['0099912-B', 'CAMISA MARINE LISA'],
+    ]);
+    expect(report.models.flatMap((m) => m.variants).map((v) => v.sku)).toEqual([
+      '0099912150001',
+      '0099912150002',
+      '0099912230003',
+    ]);
+    expect(
+      report.warnings.some((w) => w.message.includes('2 produtos diferentes')),
+    ).toBe(true);
   });
 });

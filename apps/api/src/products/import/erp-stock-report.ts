@@ -92,7 +92,9 @@ const HEADERS: Record<Column, (title: string) => boolean> = {
   value: (t) => t === 'TVALOR',
   cost: (t) => t === 'TCUSTO',
 };
-const REQUIRED: Column[] = ['code', 'description', 'size', 'color', 'quantity'];
+// A cor não é obrigatória: algumas exportações do ERP vêm sem a coluna COR
+// (ver colorFromCode).
+const REQUIRED: Column[] = ['code', 'description', 'size', 'quantity'];
 const LABELS: Record<Column, string> = {
   code: 'CÓDIGO',
   description: 'DESCRIÇÃO',
@@ -148,6 +150,14 @@ export function normalizeCollection(raw: string) {
   return collection || null;
 }
 
+// Relatório sem a coluna COR: no código do ERP (13 dígitos), os 6 últimos são
+// cor (3) + tamanho (3). Dentro de um modelo, esses 3 dígitos separam as cores
+// (conferido nos relatórios reais: nenhuma colisão modelo + cor + tamanho).
+// Entra como "COR 215" para ficar claro que é o código, não o nome da cor.
+export function colorFromCode(code: string) {
+  return code.length >= 9 ? `COR ${code.slice(-6, -3)}` : '';
+}
+
 // Primeira palavra da descrição; "ZZ" (prefixo do ERP) é ignorado.
 export function categoryFromDescription(description: string) {
   const words = clean(description).toUpperCase().split(' ');
@@ -156,6 +166,9 @@ export function categoryFromDescription(description: string) {
   const canonical = CATEGORY_ALIASES[unaccent(word)] ?? word;
   return titleCase(canonical);
 }
+
+// 1 → B, 2 → C ... (0 seria o próprio código, sem sufixo).
+const suffixLetter = (index: number) => String.fromCharCode(65 + index);
 
 const round = (value: number, decimals: number) =>
   Math.round(value * 10 ** decimals) / 10 ** decimals;
@@ -295,7 +308,8 @@ export function parseErpStockReport(buffer: Buffer): ErpStockReport {
     const size = normalizeSize(rawSize);
     track('Tamanho', rawSize, size);
     const rawColor = clean(get(row, 'color')).toUpperCase();
-    const color = normalizeColor(rawColor);
+    const color =
+      column.color < 0 ? colorFromCode(sku) : normalizeColor(rawColor);
     track('Cor', rawColor, color);
     const rawCollection = clean(get(row, 'collection')).toUpperCase();
     const collection = normalizeCollection(rawCollection);
@@ -400,16 +414,35 @@ export function parseErpStockReport(buffer: Buffer): ErpStockReport {
     groups.set(row.reference, list);
   }
 
-  const models: ErpModel[] = [];
-  for (const [reference, list] of groups) {
-    const names = new Set(list.map((r) => r.name));
-    if (names.size > 1) {
-      errors.push({
-        line: list[0].line,
-        message: `Referência ${reference} aparece com descrições diferentes: ${[...names].join(' | ')}.`,
-      });
+  // Uma referência do ERP usada por produtos diferentes (descrições
+  // diferentes) vira um modelo por descrição: o primeiro mantém a referência e
+  // os demais ganham um sufixo (-B, -C...). Os SKUs não mudam. O caso é listado
+  // como aviso para a loja conferir; antes, bloqueava a importação inteira.
+  const partitions: [string, Parsed[]][] = [];
+  for (const [baseReference, rows] of groups) {
+    const byName = new Map<string, Parsed[]>();
+    for (const row of rows) {
+      byName.set(row.name, [...(byName.get(row.name) ?? []), row]);
+    }
+    if (byName.size === 1) {
+      partitions.push([baseReference, rows]);
       continue;
     }
+    const assigned: string[] = [];
+    [...byName.entries()].forEach(([name, part], index) => {
+      const reference =
+        index === 0 ? baseReference : `${baseReference}-${suffixLetter(index)}`;
+      assigned.push(`${reference} = ${name}`);
+      partitions.push([reference, part]);
+    });
+    warnings.push({
+      line: rows[0].line,
+      message: `A referência ${baseReference} está em ${byName.size} produtos diferentes no ERP; entraram como modelos separados (${assigned.join(' | ')}). Confira no cadastro do ERP.`,
+    });
+  }
+
+  const models: ErpModel[] = [];
+  for (const [reference, list] of partitions) {
     const combos = new Map<string, number>();
     for (const row of list) {
       const key = `${row.size}|${row.color}`;
@@ -452,6 +485,13 @@ export function parseErpStockReport(buffer: Buffer): ErpStockReport {
             ? row.salePrice
             : null,
       })),
+    });
+  }
+
+  if (column.color < 0 && parsed.length > 0) {
+    warnings.unshift({
+      message:
+        'O relatório não tem a coluna COR: cada cor foi identificada pelo código do produto (dígitos 8 a 10, como "COR 215"). Para importar com os nomes das cores, exporte o relatório com a coluna COR; ou renomeie as cores depois na edição do produto.',
     });
   }
 

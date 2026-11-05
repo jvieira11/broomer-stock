@@ -30,7 +30,7 @@ export async function resetDatabase(prisma: PrismaService) {
     throw new Error('resetDatabase só pode rodar no banco de teste');
   }
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE purchase_order_items, purchase_orders, purchase_settings, stock_movements, stock_operations, product_variants, products, suppliers, categories, password_reset_tokens, users, organizations CASCADE',
+    'TRUNCATE TABLE sale_lines, sales_imports, purchase_order_items, purchase_orders, purchase_settings, stock_movements, stock_operations, product_variants, products, suppliers, categories, password_reset_tokens, users, organizations CASCADE',
   );
 }
 

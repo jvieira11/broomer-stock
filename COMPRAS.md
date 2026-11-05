@@ -97,7 +97,26 @@ Migration `20261105154117_modulo_compras` (só acrescenta, não altera nem apaga
 - `purchase_orders` (pedido: número por loja, fornecedor, status, previsão, observações, chave de idempotência);
 - `purchase_order_items` (variação, quantidade pedida e recebida, custo combinado; CHECK: 0 ≤ recebido ≤ pedido);
 - `purchase_settings` (parâmetros por loja; CHECK nos limites);
+- `sales_imports` e `sale_lines` (histórico de vendas importado; migration `historico_vendas`);
 - coluna `stock_operations.purchase_order_id` (opcional): liga a entrada ao pedido.
+
+## Importação das planilhas do ERP (estoque e vendas)
+
+Conferido com os relatórios reais de 31/10/2026 (arquivos que ficam fora do repositório).
+
+**Estoque** (`Produtos > Importar estoque`, só administrador): relatório "estoque final do dia".
+- Aceita o leiaute **sem as colunas COR e PÇ UNIT** (o de 2026). A cor é identificada pelos dígitos 8 a 10 do código (`COR 215`): nos 5.976 SKUs reais, modelo + cor + tamanho nunca se repetem. O preço sai de valor ÷ quantidade. A prévia avisa; os nomes das cores podem ser trocados depois, ou o relatório exportado com a coluna COR.
+- Referência do ERP usada por **produtos diferentes** (descrições diferentes) deixou de bloquear: vira um modelo por descrição (`0033312`, `0033312-B`), com SKUs intactos, e a prévia lista o caso para conferir no ERP.
+- Saldo negativo entra como 0 (regra que já existia); a prévia lista cada um.
+- Medido: 5.977 SKUs, 1.209 modelos em ~5 s; soma das linhas = TOTAL GERAL do relatório.
+
+**Vendas** (`Compras > Histórico de vendas`, administrador e gerente): relatório "vendas por cupom".
+- É **só para análise** (giro, mix de tamanhos, desconto, margem, vendedores). **Não altera o estoque**: o saldo já vem do "estoque final do dia"; lançar essas vendas como saídas descontaria duas vezes.
+- A prévia confere a soma das linhas com o **TOTAL GERAL** do relatório (peças e valor); se não bater, recusa. Uma linha de venda é a que tem VALOR UN; subtotais (por produto, vendedor e dia) são ignorados, mesmo quando o texto "Total" vem cortado. Devolução = linha "DEVOLUÇÃO …" com quantidade negativa (e desconto negativo).
+- Não lê CPF nem celular do cliente (se a planilha tiver, são ignorados) e não guarda nada disso.
+- O mesmo arquivo, ou um período já importado, é recusado (remova a importação antes, só administrador). Remover não afeta o estoque.
+- **Sem código e sem cor no relatório de vendas, e com a descrição cortada**, a venda não pode ser ligada a um SKU de forma segura (nos dados reais, 83% das peças vendidas casam com mais de um modelo). Por isso a análise é por categoria, tamanho e descrição, e essas vendas **não** alimentam as sugestões por variação. Para isso é preciso exportar o relatório **com a coluna CÓDIGO** (a coluna já é aceita: fica gravada e permite a ligação exata no futuro).
+- Aviso automático quando o período do relatório termina bem depois da última venda (nos dados reais: período até 31/10/2026, última venda em 30/09/2026).
 
 ## Limitações e decisões que dependem da Broomer
 

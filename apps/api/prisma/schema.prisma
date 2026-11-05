@@ -27,6 +27,8 @@ model Organization {
   movements        StockMovement[]
   purchaseOrders   PurchaseOrder[]
   purchaseSettings PurchaseSetting?
+  salesImports     SalesImport[]
+  saleLines        SaleLine[]
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
@@ -60,6 +62,7 @@ model User {
   operations      StockOperation[]
   movements       StockMovement[]
   purchaseOrders  PurchaseOrder[]
+  salesImports    SalesImport[]
   passwordResets  PasswordResetToken[]
   createdAt       DateTime             @default(now()) @map("created_at")
   updatedAt       DateTime             @updatedAt @map("updated_at")
@@ -351,4 +354,58 @@ model PurchaseSetting {
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
   @@map("purchase_settings")
+}
+
+// Histórico de vendas importado do relatório "vendas por cupom" do ERP. É só
+// para análise (giro, mix de tamanhos, margem): NÃO mexe no estoque, porque o
+// saldo já vem do relatório "estoque final do dia". O relatório não traz
+// CPF/celular do cliente (e, se vier, o importador ignora essas colunas).
+model SalesImport {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // SHA-256 do arquivo: o mesmo arquivo não entra duas vezes.
+  fileHash       String       @map("file_hash")
+  periodFrom     DateTime     @map("period_from") @db.Date
+  periodTo       DateTime     @map("period_to") @db.Date
+  store          String?
+  lineCount      Int          @map("line_count")
+  pieces         Int
+  total          Decimal      @db.Decimal(14, 2)
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  lines          SaleLine[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([organizationId, fileHash])
+  @@index([organizationId, periodFrom, periodTo])
+  @@map("sales_imports")
+}
+
+// Uma linha do relatório: um produto + tamanho vendido (ou devolvido) num dia.
+// O relatório de 2026 não traz código nem cor, e a descrição vem cortada: por
+// isso a linha NÃO é ligada a um SKU. code só é preenchido se o relatório
+// tiver a coluna CÓDIGO (ligação exata no futuro). Devolução: quantity negativa.
+model SaleLine {
+  id             String       @id @default(uuid())
+  importId       String       @map("import_id")
+  import         SalesImport  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  soldOn         DateTime     @map("sold_on") @db.Date
+  seller         String
+  description    String
+  size           String       @default("")
+  code           String?
+  unitPrice      Decimal      @map("unit_price") @db.Decimal(12, 2)
+  quantity       Int
+  discount       Decimal      @db.Decimal(12, 2)
+  cost           Decimal      @db.Decimal(14, 2)
+  returned       Decimal      @db.Decimal(12, 2)
+  total          Decimal      @db.Decimal(14, 2)
+  isReturn       Boolean      @default(false) @map("is_return")
+
+  @@index([organizationId, soldOn])
+  @@index([importId])
+  @@map("sale_lines")
 }

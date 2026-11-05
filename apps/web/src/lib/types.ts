@@ -350,3 +350,80 @@ export interface PurchaseSummary {
     reversal: { id: string; number: number } | null;
   }[];
 }
+
+// ---------- Histórico de vendas importado ----------
+
+export interface SalesIssue {
+  line?: number;
+  message: string;
+}
+
+export interface SalesPreview {
+  fileHash: string;
+  store: string | null;
+  periodFrom: string | null;
+  periodTo: string | null;
+  columns: string[];
+  canImport: boolean;
+  lineCount: number;
+  totals: {
+    pieces: number;
+    sold: number;
+    returned: number;
+    total: number;
+    discount: number;
+    cost: number;
+    returnsValue: number;
+  };
+  reportTotals: { pieces: number | null; total: number | null };
+  sellers: number;
+  months: { month: string; pieces: number; total: number }[];
+  warnings: SalesIssue[];
+  warningCount: number;
+  errors: SalesIssue[];
+  errorCount: number;
+}
+
+export interface SalesImportResult {
+  id: string;
+  lineCount: number;
+  pieces: number;
+  total: number;
+  periodFrom: string;
+  periodTo: string;
+}
+
+export interface SalesImportItem {
+  id: string;
+  periodFrom: string;
+  periodTo: string;
+  store: string | null;
+  lineCount: number;
+  pieces: number;
+  total: DecimalString;
+  createdAt: string;
+  user: { id: string; name: string };
+}
+
+export interface SalesSummary {
+  coverage: { first: string | null; last: string | null };
+  category: string | null;
+  totals: {
+    soldPieces: number;
+    returnedPieces: number;
+    netPieces: number;
+    revenue: DecimalString;
+    discount: DecimalString;
+    discountRate: number;
+    cost: DecimalString;
+    margin: DecimalString;
+    marginRate: number;
+    returnsValue: DecimalString;
+    lines: number;
+  };
+  months: { month: string; pieces: number; revenue: DecimalString; margin: DecimalString }[];
+  categories: { category: string; pieces: number; revenue: DecimalString; margin: DecimalString }[];
+  sizes: { size: string; pieces: number }[];
+  products: { description: string; pieces: number; revenue: DecimalString }[];
+  sellers: { seller: string; pieces: number; revenue: DecimalString }[];
+}
