@@ -20,6 +20,7 @@ import {
   ChangeStatusDto,
   CreatePurchaseOrderDto,
   FromSuggestionsDto,
+  QueryGroupSuggestionDto,
   QueryPurchaseOrderDto,
   QuerySuggestionDto,
   ReceivePurchaseOrderDto,
@@ -27,13 +28,17 @@ import {
   UpdatePurchaseOrderDto,
 } from './dto/purchase.dto';
 import { PurchaseOrdersService } from './orders.service';
+import { GroupSuggestionsService } from './group-suggestions.service';
 import { SuggestionsService } from './suggestions.service';
 
 // Dashboard, sugestões e parâmetros do módulo de compras. Todos os papéis
 // consultam; só administrador e gerente mudam os parâmetros.
 @Controller('purchases')
 export class PurchasesController {
-  constructor(private readonly suggestions: SuggestionsService) {}
+  constructor(
+    private readonly suggestions: SuggestionsService,
+    private readonly groups: GroupSuggestionsService,
+  ) {}
 
   @Get('summary')
   summary(@CurrentUser() user: AuthUser) {
@@ -43,6 +48,17 @@ export class PurchasesController {
   @Get('suggestions')
   list(@CurrentUser() user: AuthUser, @Query() query: QuerySuggestionDto) {
     return this.suggestions.suggestions(user, query);
+  }
+
+  // Reposição por categoria e tamanho, pelo histórico de vendas importado
+  // (traz custo e margem do histórico: administrador e gerente).
+  @Get('by-size')
+  @Roles(...CAN_EDIT_CATALOG)
+  bySize(
+    @CurrentUser() user: AuthUser,
+    @Query() query: QueryGroupSuggestionDto,
+  ) {
+    return this.groups.bySize(user, query);
   }
 
   @Get('settings')

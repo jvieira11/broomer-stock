@@ -333,6 +333,81 @@ describe('Histórico de vendas importado (e2e)', () => {
     ).toBe(0);
   });
 
+  it('sugestão por categoria e tamanho cruza as vendas importadas com o estoque', async () => {
+    // Estoque: camisas M (5 peças) e G (40 peças); vendas importadas de camisa
+    // M em vários dias (≥ 3 vendas e ≥ 14 dias de histórico).
+    const camisa = await createProduct(admin.api, {
+      name: 'Camisa Linho',
+      variants: [
+        { size: 'M', color: 'PRETO' },
+        { size: 'G', color: 'PRETO' },
+      ],
+    });
+    const byId = (size: string) =>
+      camisa.variants.find((v) => v.size === size)!;
+    await operate(admin.api, 'ENTRY', [
+      { variantId: byId('M').id, quantity: 5 },
+      { variantId: byId('G').id, quantity: 40 },
+    ]).expect(201);
+
+    const days = ['01', '08', '15', '22', '29'];
+    const body: Cell[][] = days.map((d) => [
+      `${d}/10/2026`,
+      'Ana',
+      'CAMISA LINHO SLIM',
+      'M',
+      200,
+      4,
+      0,
+      0,
+      160,
+      0,
+      800,
+    ]);
+    const file = salesFile(body, [20, 4000]);
+    await upload('/api/sales-history/import', file, token, {
+      fileHash: await hashOf(file),
+    }).expect(201);
+
+    const res = (await admin.api.get('/api/purchases/by-size').expect(200))
+      .body as {
+      hasSales: boolean;
+      referenceDate: string;
+      items: {
+        category: string;
+        size: string;
+        quantity: number;
+        sold: number;
+        suggested: number | null;
+        classification: string;
+        reliable: boolean;
+      }[];
+    };
+    expect(res.hasSales).toBe(true);
+    expect(res.referenceDate).toBe('2026-10-29');
+    const m = res.items.find((i) => i.category === 'CAMISA' && i.size === 'M')!;
+    expect(m).toMatchObject({ quantity: 5, sold: 20, reliable: true });
+    // 20 peças em 29 dias (0,69/dia): meta ceil(0,69 x 45) = 32; 32 - 5 = 27.
+    expect(m.suggested).toBe(27);
+    expect(['CRITICAL', 'REPLENISH']).toContain(m.classification);
+    // G tem estoque e nenhuma venda: parado.
+    const g = res.items.find((i) => i.category === 'CAMISA' && i.size === 'G')!;
+    expect(g).toMatchObject({ quantity: 40, sold: 0 });
+    // Só administrador e gerente; filtro por categoria.
+    const viewer = await userWithRole(app, admin.organizationId, Role.VIEWER);
+    await viewer.api.get('/api/purchases/by-size').expect(403);
+    const polo = (
+      await admin.api.get('/api/purchases/by-size?category=polo').expect(200)
+    ).body as { items: unknown[] };
+    expect(polo.items).toEqual([]);
+  });
+
+  it('sem vendas importadas, a sugestão por tamanho avisa e não inventa', async () => {
+    const res = (await admin.api.get('/api/purchases/by-size').expect(200))
+      .body as { hasSales: boolean; items: unknown[] };
+    expect(res).toMatchObject({ hasSales: false, items: [] });
+  });
+
   it('recusa arquivo que não é planilha', async () => {
     await upload(
       '/api/sales-history/import/preview',

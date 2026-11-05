@@ -261,3 +261,19 @@ export class SettingsDto {
   @Max(1095)
   excessDays: number;
 }
+
+export class QueryGroupSuggestionDto {
+  // Sobrepõe a janela de análise configurada.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(7)
+  @Max(366)
+  days?: number;
+
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(40)
+  category?: string;
+}

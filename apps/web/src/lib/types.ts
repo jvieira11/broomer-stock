@@ -427,3 +427,30 @@ export interface SalesSummary {
   products: { description: string; pieces: number; revenue: DecimalString }[];
   sellers: { seller: string; pieces: number; revenue: DecimalString }[];
 }
+
+export interface GroupSuggestion {
+  category: string;
+  size: string;
+  quantity: number;
+  minQuantity: number;
+  sold: number;
+  onOrder: number;
+  classification: Classification;
+  suggested: number | null;
+  minShortfall: number | null;
+  reliable: boolean;
+  dailyRate: number | null;
+  coverageDays: number | null;
+  observedDays: number;
+  reason: string;
+}
+
+export interface GroupSuggestions {
+  hasSales: boolean;
+  params: PurchaseParams;
+  referenceDate: string | null;
+  historyFrom?: string;
+  counts?: Record<Classification, number>;
+  totalSuggested?: number;
+  items: GroupSuggestion[];
+}

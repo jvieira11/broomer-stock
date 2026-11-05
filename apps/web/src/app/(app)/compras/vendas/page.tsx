@@ -20,7 +20,8 @@ import { api } from "@/lib/api";
 import { getMe, pickQuery } from "@/lib/data";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/format";
 import { canEditCatalog, canManageUsers } from "@/lib/permissions";
-import type { SalesImportItem, SalesSummary } from "@/lib/types";
+import { classificationLabels, classificationTones } from "@/lib/purchases";
+import type { GroupSuggestions, SalesImportItem, SalesSummary } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Histórico de vendas" };
 
@@ -82,10 +83,16 @@ export default async function SalesHistoryPage({ searchParams }: PageProps<"/com
 
   const params = await searchParams;
   const query = pickQuery(params, FILTERS);
-  const [summary, imports] = await Promise.all([
+  const categoryQuery = new URLSearchParams();
+  if (query.get("category")) categoryQuery.set("category", query.get("category") ?? "");
+  const [summary, imports, groups] = await Promise.all([
     api.get<SalesSummary>(`/sales-history/summary?${query}`),
     api.get<SalesImportItem[]>("/sales-history/imports"),
+    api.get<GroupSuggestions>(`/purchases/by-size?${categoryQuery}`),
   ]);
+  const stockPieces = groups.items.reduce((sum, g) => sum + g.quantity, 0);
+  const soldWindow = groups.items.reduce((sum, g) => sum + g.sold, 0);
+  const overallCover = soldWindow > 0 ? Math.round(stockPieces / (soldWindow / groups.params.analysisDays)) : null;
   const value = (key: (typeof FILTERS)[number]) => query.get(key) ?? "";
   const t = summary.totals;
   const hasData = t.lines > 0;
@@ -201,6 +208,71 @@ export default async function SalesHistoryPage({ searchParams }: PageProps<"/com
             <StatCard label="Custo" value={formatCurrency(t.cost)} hint="das peças vendidas" />
           </div>
 
+          <Card
+            title="Reposição por categoria e tamanho"
+            description={`Estoque atual × vendas dos últimos ${groups.params.analysisDays} dias${groups.referenceDate ? ` até ${day(groups.referenceDate)}` : ""}. Diz quantas peças de cada tamanho comprar, por categoria; não diz qual modelo ou cor.`}
+            className="mb-6"
+            flush
+          >
+            <div className="border-b border-neutral-100 px-4 py-3 text-sm text-neutral-600">
+              {overallCover !== null && (
+                <p>
+                  {formatQuantity(stockPieces)} peças em estoque{summary.category ? ` (${summary.category})` : ""}; no ritmo
+                  das vendas, duram cerca de <strong>{formatQuantity(overallCover)} dias</strong>.{" "}
+                  {groups.totalSuggested === 0
+                    ? "Nenhuma compra sugerida: o estoque cobre as vendas."
+                    : `${formatQuantity(groups.totalSuggested ?? 0)} peça(s) sugeridas no total.`}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(Object.keys(classificationLabels) as (keyof typeof classificationLabels)[])
+                  .filter((c) => (groups.counts?.[c] ?? 0) > 0)
+                  .map((c) => (
+                    <Badge key={c} tone={classificationTones[c]}>
+                      {classificationLabels[c]} · {groups.counts?.[c]}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+            {groups.items.length === 0 ? (
+              <EmptyState title="Nada para mostrar">Sem estoque nem vendas nessa categoria.</EmptyState>
+            ) : (
+              <div className="max-h-[32rem] overflow-y-auto">
+                <Table head={["Categoria", "Tamanho", "Estoque", "Vendidas", "Dura (dias)", "Sugerido", "Situação"]}>
+                  {groups.items.slice(0, 60).map((g) => (
+                    <tr key={`${g.category}-${g.size}`} className={rowClass}>
+                      <td className={cellClass}>
+                        {g.category}
+                        <details className="text-xs text-neutral-500">
+                          <summary className="cursor-pointer select-none hover:text-ink-900">Por quê?</summary>
+                          <p className="mt-1 max-w-sm whitespace-normal leading-relaxed">{g.reason}</p>
+                        </details>
+                      </td>
+                      <td className={cellClass}>{g.size || "único"}</td>
+                      <td className={`${cellClass} font-semibold`}>{g.quantity}</td>
+                      <td className={cellClass}>{g.sold}</td>
+                      <td className={`${cellClass} text-neutral-500`}>
+                        {g.coverageDays !== null ? formatQuantity(Math.round(g.coverageDays)) : "—"}
+                      </td>
+                      <td className={cellClass}>
+                        {g.suggested === null ? (
+                          <span className="text-xs text-neutral-500">sem dados</span>
+                        ) : (
+                          <span className={g.suggested > 0 ? "font-bold" : "text-neutral-400"}>{g.suggested}</span>
+                        )}
+                      </td>
+                      <td className={cellClass}>
+                        <Badge tone={classificationTones[g.classification]}>
+                          {classificationLabels[g.classification]}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </Table>
+              </div>
+            )}
+          </Card>
+
           <div className="mb-6 grid gap-6 lg:grid-cols-2">
             <Card title="Peças vendidas por mês" description="Líquido de devoluções">
               <Bars
@@ -271,7 +343,7 @@ export default async function SalesHistoryPage({ searchParams }: PageProps<"/com
           <p className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
             O relatório de vendas atual não traz o código nem a cor do produto, e a descrição vem cortada.
             Por isso a análise é por categoria, tamanho e descrição, e as vendas não são ligadas a SKUs nem
-            entram nas sugestões de compra por variação. Para isso, exporte o relatório com a coluna CÓDIGO.
+            entram nas sugestões de compra por variação: a reposição acima é por categoria e tamanho.
           </p>
         </>
       )}

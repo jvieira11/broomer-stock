@@ -100,6 +100,15 @@ Migration `20261105154117_modulo_compras` (só acrescenta, não altera nem apaga
 - `sales_imports` e `sale_lines` (histórico de vendas importado; migration `historico_vendas`);
 - coluna `stock_operations.purchase_order_id` (opcional): liga a entrada ao pedido.
 
+### Reposição por categoria e tamanho (a partir do histórico de vendas importado)
+
+Em `Compras > Histórico de vendas`. Cruza, por **categoria + tamanho**, o estoque atual com as vendas importadas e usa a **mesma regra** de cálculo acima (ritmo, meta, a caminho, "sem dados" quando faltam vendas). Diz **quantas peças de cada tamanho** repor por categoria; **não** diz qual modelo ou cor.
+- O histórico termina na **última venda importada** (não em "hoje"): a janela é contada para trás a partir dela.
+- Sem número de cupom no relatório, as "vendas mínimas" contam **linhas de venda** (produto + tamanho + dia).
+- Categoria e tamanho são comparados sem acento e no padrão do estoque (`DV` = sem tamanho, `58M` = `58 M`).
+- Só administrador e gerente (o histórico traz custo, margem e vendedores).
+- Com os relatórios reais de out/2026, o estoque (10.074 peças) cobre ~744 dias no ritmo de jul–set (1.219 peças líquidas em 90 dias): o sistema não sugere nenhuma compra e aponta o excesso. Parte disso é estoque de coleções antigas.
+
 ## Importação das planilhas do ERP (estoque e vendas)
 
 Conferido com os relatórios reais de 31/10/2026 (arquivos que ficam fora do repositório).
@@ -115,7 +124,7 @@ Conferido com os relatórios reais de 31/10/2026 (arquivos que ficam fora do rep
 - A prévia confere a soma das linhas com o **TOTAL GERAL** do relatório (peças e valor); se não bater, recusa. Uma linha de venda é a que tem VALOR UN; subtotais (por produto, vendedor e dia) são ignorados, mesmo quando o texto "Total" vem cortado. Devolução = linha "DEVOLUÇÃO …" com quantidade negativa (e desconto negativo).
 - Não lê CPF nem celular do cliente (se a planilha tiver, são ignorados) e não guarda nada disso.
 - O mesmo arquivo, ou um período já importado, é recusado (remova a importação antes, só administrador). Remover não afeta o estoque.
-- **Sem código e sem cor no relatório de vendas, e com a descrição cortada**, a venda não pode ser ligada a um SKU de forma segura (nos dados reais, 83% das peças vendidas casam com mais de um modelo). Por isso a análise é por categoria, tamanho e descrição, e essas vendas **não** alimentam as sugestões por variação. Para isso é preciso exportar o relatório **com a coluna CÓDIGO** (a coluna já é aceita: fica gravada e permite a ligação exata no futuro).
+- **Sem código e sem cor no relatório de vendas, e com a descrição cortada**, a venda não pode ser ligada a um SKU de forma segura (nos dados reais, 83% das peças vendidas casam com mais de um modelo). Por isso essas vendas **não** alimentam as sugestões por variação. O que existe nos dois relatórios é a **categoria** (primeira palavra da descrição) e o **tamanho**: a reposição é calculada por categoria + tamanho (abaixo). Se um dia o relatório de vendas vier com a coluna CÓDIGO, ela já é aceita e fica gravada.
 - Aviso automático quando o período do relatório termina bem depois da última venda (nos dados reais: período até 31/10/2026, última venda em 30/09/2026).
 
 ## Limitações e decisões que dependem da Broomer
