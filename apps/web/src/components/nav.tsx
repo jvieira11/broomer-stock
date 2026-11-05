@@ -8,6 +8,7 @@ import {
   Menu,
   Settings,
   Shirt,
+  ShoppingCart,
   Tags,
   Users,
   X,
@@ -36,6 +37,7 @@ function links({ canMove, isAdmin }: NavFlags) {
         ]
       : []),
     { href: "/movimentacoes", label: "Histórico", icon: History },
+    { href: "/compras", label: "Compras", icon: ShoppingCart },
     { href: "/categorias", label: "Categorias", icon: Tags },
     ...(isAdmin
       ? [

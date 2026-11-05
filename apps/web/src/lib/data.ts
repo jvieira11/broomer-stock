@@ -2,7 +2,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { api, ApiError } from "./api";
-import type { Me, Operation, ProductDetail } from "./types";
+import type { Me, Operation, ProductDetail, PurchaseOrder } from "./types";
 
 // Usuário logado. `cache` faz o layout e a página compartilharem a mesma
 // chamada dentro de uma requisição.
@@ -22,6 +22,9 @@ async function orNotFound<T>(path: string) {
 
 export const getProductOr404 = (id: string) =>
   orNotFound<ProductDetail>(`/products/${id}`);
+
+export const getPurchaseOrderOr404 = (id: string) =>
+  orNotFound<PurchaseOrder>(`/purchase-orders/${id}`);
 
 export const getOperationOr404 = (id: string) =>
   orNotFound<Operation>(`/operations/${id}`);
