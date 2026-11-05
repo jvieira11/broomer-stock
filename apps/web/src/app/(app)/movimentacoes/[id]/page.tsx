@@ -111,6 +111,13 @@ export default async function OperationPage({
             <Info label="Responsável">{op.user.name}</Info>
             {op.saleReference && <Info label="Nº da venda / cupom">{op.saleReference}</Info>}
             {op.origin && <Info label="Fornecedor / origem">{op.origin}</Info>}
+            {op.purchaseOrder && (
+              <Info label="Pedido de compra">
+                <Link href={`/compras/pedidos/${op.purchaseOrder.id}`} className={linkClass}>
+                  Pedido #{op.purchaseOrder.number}
+                </Link>
+              </Info>
+            )}
             <Info label="Motivo">{op.reason}</Info>
             <Info label="Observações">{op.notes}</Info>
           </dl>

@@ -10,6 +10,7 @@ estornos e o histórico completo, com acesso por perfil.
 | `apps/api` | NestJS 11, Prisma 7, PostgreSQL 17 |
 | `apps/web` | Next.js 16 (App Router, Server Actions), React 19, Tailwind 4, Lucide, Montserrat |
 | Banco | Postgres no Docker (`docker-compose.yml`, porta **5434**) |
+| Compras | Sugestão de reposição, pedidos de compra e recebimento com entrada no estoque — ver [COMPRAS.md](COMPRAS.md) |
 | Produção | Docker Compose com Caddy e backups; banco no próprio servidor ou no Neon (Postgres gerenciado, São Paulo) — ver [DEPLOY.md](DEPLOY.md) |
 
 ## Como rodar (desenvolvimento)

@@ -30,7 +30,7 @@ export async function resetDatabase(prisma: PrismaService) {
     throw new Error('resetDatabase só pode rodar no banco de teste');
   }
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE stock_movements, stock_operations, product_variants, products, suppliers, categories, password_reset_tokens, users, organizations CASCADE',
+    'TRUNCATE TABLE purchase_order_items, purchase_orders, purchase_settings, stock_movements, stock_operations, product_variants, products, suppliers, categories, password_reset_tokens, users, organizations CASCADE',
   );
 }
 
@@ -44,6 +44,7 @@ export function client(app: INestApplication<App>, token?: string) {
     get: (url: string) => auth(server().get(url)),
     post: (url: string, body?: object) => auth(server().post(url).send(body)),
     patch: (url: string, body?: object) => auth(server().patch(url).send(body)),
+    put: (url: string, body?: object) => auth(server().put(url).send(body)),
     delete: (url: string) => auth(server().delete(url)),
   };
 }
@@ -98,6 +99,7 @@ export async function createProduct(
     name?: string;
     categoryId?: string;
     minQuantity?: number;
+    supplierName?: string;
     variants?: { size?: string; color?: string; sku?: string }[];
   } = {},
 ): Promise<TestProduct> {
@@ -110,6 +112,7 @@ export async function createProduct(
       name: data.name ?? `Camisa ${skuCounter}`,
       categoryId: data.categoryId,
       minQuantity: data.minQuantity,
+      supplierName: data.supplierName,
       variants: (data.variants ?? [{ size: 'M', color: 'PRETO' }]).map(
         (variant, index) => ({
           sku: variant.sku ?? `${reference}-${index}`,

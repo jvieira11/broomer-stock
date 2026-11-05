@@ -150,6 +150,7 @@ export interface OperationSummary {
 }
 
 export interface Operation extends OperationSummary {
+  purchaseOrder?: { id: string; number: number } | null;
   movements: OperationMovement[];
   reversedOperation: { id: string; number: number; type: OperationType } | null;
 }
@@ -217,4 +218,135 @@ export interface Organization {
   name: string;
   cnpj: string | null;
   createdAt: string;
+}
+
+// ---------- Compras ----------
+
+export type Classification =
+  | "CRITICAL"
+  | "REPLENISH"
+  | "BELOW_MIN"
+  | "STALE"
+  | "EXCESS"
+  | "INSUFFICIENT"
+  | "OK";
+
+export type PurchaseStatus =
+  | "DRAFT"
+  | "PENDING"
+  | "SENT"
+  | "PARTIALLY_RECEIVED"
+  | "RECEIVED"
+  | "CANCELLED";
+
+export interface PurchaseParams {
+  analysisDays: number;
+  leadTimeDays: number;
+  coverDays: number;
+  minSales: number;
+  minHistoryDays: number;
+  excessDays: number;
+}
+
+export interface SuggestionRow {
+  variantId: string;
+  sku: string;
+  size: string;
+  color: string;
+  product: { id: string; reference: string; name: string };
+  category: { id: string; name: string } | null;
+  supplier: { id: string; name: string } | null;
+  quantity: number;
+  minQuantity: number;
+  sold: number;
+  onOrder: number;
+  averageCost: DecimalString;
+  classification: Classification;
+  suggested: number | null;
+  minShortfall: number | null;
+  reliable: boolean;
+  dailyRate: number | null;
+  coverageDays: number | null;
+  observedDays: number;
+  reason: string;
+}
+
+export interface SuggestionsPage extends Page<SuggestionRow> {
+  params: PurchaseParams;
+  counts: Record<Classification, number>;
+  totalSuggested: number;
+  truncated: boolean;
+}
+
+export interface PurchaseOrderListItem {
+  id: string;
+  number: number;
+  status: PurchaseStatus;
+  notes: string | null;
+  expectedAt: string | null;
+  createdAt: string;
+  supplier: { id: string; name: string } | null;
+  user: { id: string; name: string };
+  itemCount: number;
+  piecesOrdered: number;
+  piecesReceived: number;
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  variantId: string;
+  quantityOrdered: number;
+  quantityReceived: number;
+  unitCost: DecimalString | null;
+  variant: VariantSummary & { quantity: number };
+}
+
+export interface PurchaseOrder {
+  id: string;
+  number: number;
+  status: PurchaseStatus;
+  notes: string | null;
+  expectedAt: string | null;
+  createdAt: string;
+  sentAt: string | null;
+  cancelledAt: string | null;
+  supplier: { id: string; name: string } | null;
+  user: { id: string; name: string };
+  items: PurchaseOrderItem[];
+  receipts: {
+    id: string;
+    number: number;
+    occurredAt: string;
+    user: { id: string; name: string };
+    reversal: { id: string; number: number } | null;
+    _count: { movements: number };
+  }[];
+}
+
+export interface PurchaseSummary {
+  params: PurchaseParams;
+  truncated: boolean;
+  counts: Record<Classification, number>;
+  totalSuggested: number;
+  estimatedCost: DecimalString;
+  suggestedWithoutCost: number;
+  needReplenish: number;
+  topNeed: { id: string; name: string; suggested: number; variants: number }[];
+  topSold: { id: string; name: string; sold: number; stock: number }[];
+  topStale: { id: string; name: string; pieces: number }[];
+  ordersByStatus: Partial<Record<PurchaseStatus, number>>;
+  awaitingPieces: number;
+  openOrders: (Omit<PurchaseOrderListItem, "itemCount" | "piecesOrdered" | "piecesReceived" | "user"> & {
+    piecesPending: number;
+  })[];
+  recentEntries: {
+    id: string;
+    number: number;
+    occurredAt: string;
+    origin: string | null;
+    pieces: number;
+    user: { id: string; name: string };
+    purchaseOrder: { id: string; number: number } | null;
+    reversal: { id: string; number: number } | null;
+  }[];
 }

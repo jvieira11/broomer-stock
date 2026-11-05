@@ -14,19 +14,21 @@ datasource db {
 // A loja. O sistema roda com uma só (a Broomer), mas todos os dados continuam
 // presos a ela: isso mantém o isolamento testado e permite outra loja no futuro.
 model Organization {
-  id         String           @id @default(uuid())
-  name       String
+  id               String           @id @default(uuid())
+  name             String
   // Só letras e números, sem pontuação (o CNPJ pode ter letras desde 2026).
-  cnpj       String?
-  users      User[]
-  categories Category[]
-  suppliers  Supplier[]
-  products   Product[]
-  variants   ProductVariant[]
-  operations StockOperation[]
-  movements  StockMovement[]
-  createdAt  DateTime         @default(now()) @map("created_at")
-  updatedAt  DateTime         @updatedAt @map("updated_at")
+  cnpj             String?
+  users            User[]
+  categories       Category[]
+  suppliers        Supplier[]
+  products         Product[]
+  variants         ProductVariant[]
+  operations       StockOperation[]
+  movements        StockMovement[]
+  purchaseOrders   PurchaseOrder[]
+  purchaseSettings PurchaseSetting?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   @@map("organizations")
 }
@@ -57,6 +59,7 @@ model User {
   sessionVersion  Int                  @default(0) @map("session_version")
   operations      StockOperation[]
   movements       StockMovement[]
+  purchaseOrders  PurchaseOrder[]
   passwordResets  PasswordResetToken[]
   createdAt       DateTime             @default(now()) @map("created_at")
   updatedAt       DateTime             @updatedAt @map("updated_at")
@@ -99,14 +102,15 @@ model Category {
 
 // Fornecedor (no relatório do ERP: "FORNECEDOR - NOME FANTASIA").
 model Supplier {
-  id             String       @id @default(uuid())
-  organizationId String       @map("organization_id")
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String          @id @default(uuid())
+  organizationId String          @map("organization_id")
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
-  active         Boolean      @default(true)
+  active         Boolean         @default(true)
   products       Product[]
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@unique([organizationId, name])
   @@map("suppliers")
@@ -150,23 +154,24 @@ model Product {
 // combinação (produto, tamanho, cor) ser única de verdade no banco.
 // quantity e averageCost só mudam por movimentações.
 model ProductVariant {
-  id             String          @id @default(uuid())
-  organizationId String          @map("organization_id")
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  productId      String          @map("product_id")
-  product        Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  id             String              @id @default(uuid())
+  organizationId String              @map("organization_id")
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productId      String              @map("product_id")
+  product        Product             @relation(fields: [productId], references: [id], onDelete: Restrict)
   sku            String
-  size           String          @default("")
-  color          String          @default("")
+  size           String              @default("")
+  color          String              @default("")
   // Sobrepõem os valores do modelo quando preenchidos.
-  salePrice      Decimal?        @map("sale_price") @db.Decimal(10, 2)
-  minQuantity    Int?            @map("min_quantity")
-  quantity       Int             @default(0)
-  averageCost    Decimal         @default(0) @map("average_cost") @db.Decimal(14, 4)
-  active         Boolean         @default(true)
+  salePrice      Decimal?            @map("sale_price") @db.Decimal(10, 2)
+  minQuantity    Int?                @map("min_quantity")
+  quantity       Int                 @default(0)
+  averageCost    Decimal             @default(0) @map("average_cost") @db.Decimal(14, 4)
+  active         Boolean             @default(true)
   movements      StockMovement[]
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
+  purchaseItems  PurchaseOrderItem[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
 
   @@unique([organizationId, sku])
   @@unique([productId, size, color])
@@ -225,6 +230,9 @@ model StockOperation {
   reversedOperationId String?         @unique @map("reversed_operation_id")
   reversedOperation   StockOperation? @relation("Reversal", fields: [reversedOperationId], references: [id], onDelete: Restrict)
   reversal            StockOperation? @relation("Reversal")
+  // Recebimento de pedido de compra: a entrada aponta para o pedido de origem.
+  purchaseOrderId     String?         @map("purchase_order_id")
+  purchaseOrder       PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
   movements           StockMovement[]
   createdAt           DateTime        @default(now()) @map("created_at")
 
@@ -232,6 +240,7 @@ model StockOperation {
   @@index([organizationId, occurredAt])
   @@index([organizationId, type, occurredAt])
   @@index([userId])
+  @@index([purchaseOrderId])
   @@map("stock_operations")
 }
 
@@ -261,4 +270,85 @@ model StockMovement {
   @@index([operationId])
   @@index([userId])
   @@map("stock_movements")
+}
+
+// Pedido de compra. Criar ou mudar o pedido NÃO mexe no estoque: o saldo só
+// sobe quando a mercadoria é recebida, e cada recebimento é uma operação
+// ENTRY (StockOperation.purchaseOrderId) pela mesma rotina de qualquer entrada.
+// RASCUNHO e PENDENTE podem ser editados; a partir de ENVIADO só se recebe.
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING
+  SENT
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id             String              @id @default(uuid())
+  organizationId String              @map("organization_id")
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Número mostrado na tela, sequencial por loja (ver purchase-number.ts).
+  number         Int
+  supplierId     String?             @map("supplier_id")
+  supplier       Supplier?           @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  status         PurchaseOrderStatus @default(DRAFT)
+  notes          String?
+  // Previsão de chegada informada pelo fornecedor.
+  expectedAt     DateTime?           @map("expected_at") @db.Date
+  userId         String              @map("user_id")
+  user           User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  // Impede criar o mesmo pedido duas vezes por reenvio do formulário.
+  idempotencyKey String?             @map("idempotency_key")
+  sentAt         DateTime?           @map("sent_at")
+  cancelledAt    DateTime?           @map("cancelled_at")
+  items          PurchaseOrderItem[]
+  receipts       StockOperation[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, status])
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+// Um item do pedido: uma variação (tamanho e cor) e a quantidade pedida.
+// quantityReceived acompanha os recebimentos (e os estornos deles).
+model PurchaseOrderItem {
+  id               String         @id @default(uuid())
+  orderId          String         @map("order_id")
+  order            PurchaseOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId        String         @map("variant_id")
+  variant          ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  quantityOrdered  Int            @map("quantity_ordered")
+  quantityReceived Int            @default(0) @map("quantity_received")
+  // Custo combinado por peça (opcional); no recebimento vira o custo da entrada.
+  unitCost         Decimal?       @map("unit_cost") @db.Decimal(14, 4)
+
+  @@unique([orderId, variantId])
+  @@index([variantId])
+  @@map("purchase_order_items")
+}
+
+// Parâmetros do cálculo de sugestão de compra, por loja (ver DEPLOY/COMPRAS.md).
+model PurchaseSetting {
+  organizationId String       @id @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Janela de vendas analisada, em dias.
+  analysisDays   Int          @default(90) @map("analysis_days")
+  // Dias entre pedir e a mercadoria chegar.
+  leadTimeDays   Int          @default(15) @map("lead_time_days")
+  // Dias de vendas que o estoque comprado deve cobrir depois da chegada.
+  coverDays      Int          @default(30) @map("cover_days")
+  // Mínimo de vendas (operações) e de dias de histórico para confiar no giro.
+  minSales       Int          @default(3) @map("min_sales")
+  minHistoryDays Int          @default(14) @map("min_history_days")
+  // Estoque que dura mais que isto, no ritmo atual, é considerado excesso.
+  excessDays     Int          @default(180) @map("excess_days")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@map("purchase_settings")
 }

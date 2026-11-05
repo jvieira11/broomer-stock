@@ -20,6 +20,7 @@ import {
   QueryOperationDto,
   ReverseOperationDto,
 } from './dto/operation.dto';
+import { syncReceiptStatus } from '../purchases/order-status';
 import { nextOperationNumber } from './operation-number';
 import {
   applyMovement,
@@ -67,6 +68,7 @@ export const operationDetail = {
   },
   reversal: { select: { id: true, number: true, createdAt: true } },
   reversedOperation: { select: { id: true, number: true, type: true } },
+  purchaseOrder: { select: { id: true, number: true } },
 } satisfies Prisma.StockOperationInclude;
 
 interface LockedVariant {
@@ -172,8 +174,14 @@ export class OperationsService {
             if (original.reversal) {
               throw new ConflictException('Esta operação já foi estornada');
             }
+            // Recebimento de pedido de compra: trava o pedido antes do saldo
+            // (mesma ordem do recebimento, sem deadlock) e, depois, devolve
+            // ao pedido as peças que este estorno tira do estoque.
+            if (original.purchaseOrderId) {
+              await tx.$queryRaw`SELECT id FROM purchase_orders WHERE id = ${original.purchaseOrderId} FOR UPDATE`;
+            }
 
-            return this.record(tx, user, {
+            const reversal = await this.record(tx, user, {
               operation: {
                 type: OperationType.REVERSAL,
                 occurredAt: new Date(),
@@ -196,6 +204,19 @@ export class OperationsService {
               }),
               allowInactive: true,
             });
+            if (original.purchaseOrderId) {
+              for (const movement of original.movements) {
+                await tx.purchaseOrderItem.updateMany({
+                  where: {
+                    orderId: original.purchaseOrderId,
+                    variantId: movement.variantId,
+                  },
+                  data: { quantityReceived: { decrement: movement.quantity } },
+                });
+              }
+              await syncReceiptStatus(tx, original.purchaseOrderId);
+            }
+            return reversal;
           },
           { timeout: 20_000 },
         );
@@ -321,7 +342,8 @@ export class OperationsService {
   // Grava a operação e seus itens numa transação. As variações são travadas
   // (FOR UPDATE) em ordem de id: duas operações simultâneas sobre o mesmo SKU
   // esperam uma pela outra, sem deadlock, e a segunda já vê o saldo novo.
-  private async record(
+  // Também usado pelo recebimento de pedidos de compra (purchases).
+  async record(
     tx: Prisma.TransactionClient,
     user: AuthUser,
     input: {

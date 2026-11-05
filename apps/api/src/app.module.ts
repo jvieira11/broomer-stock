@@ -11,6 +11,7 @@ import { MovementsModule } from './movements/movements.module';
 import { OrganizationModule } from './organization/organization.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
+import { PurchasesModule } from './purchases/purchases.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     ProductsModule,
     MovementsModule,
     DashboardModule,
+    PurchasesModule,
   ],
   controllers: [HealthController],
 })

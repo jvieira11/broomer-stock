@@ -8,5 +8,6 @@ import { OperationsService } from './operations.service';
 @Module({
   controllers: [OperationsController, MovementsController],
   providers: [OperationsService],
+  exports: [OperationsService],
 })
 export class MovementsModule {}
