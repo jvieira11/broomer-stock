@@ -1,0 +1,57 @@
+# Demonstração online no Render (Blueprint). SOMENTE para dados fictícios:
+# nunca aponte este arquivo para o banco de produção. Passo a passo no
+# DEPLOY.md, seção "Demonstração online no Render".
+#
+# Os nomes abaixo formam os endereços (https://<nome>.onrender.com). Se o
+# Render acrescentar um sufixo por o nome já existir, corrija WEB_URL e API_URL.
+services:
+  - type: web
+    name: broomer-demo-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health/live
+    autoDeployTrigger: off # só atualiza quando você mandar (Manual Deploy)
+    # Plano gratuito não tem terminal: além das migrations, cria o
+    # administrador da demonstração ao subir (não faz nada se já existe).
+    dockerCommand: sh -c "node_modules/.bin/prisma migrate deploy && node dist/scripts/create-admin.js && exec node dist/main.js"
+    envVars:
+      - key: PORT
+        value: "3333"
+      - key: API_PORT
+        value: "3333"
+      - key: DATABASE_URL # banco da DEMONSTRAÇÃO (branch "demo" do Neon), com -pooler
+        sync: false
+      - key: DIRECT_URL # mesma branch, host sem -pooler (usado nas migrations)
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEB_URL
+        value: https://broomer-demo-web.onrender.com
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SEED_ORGANIZATION_NAME
+        value: Broomer (demonstração)
+      - key: SEED_ADMIN_NAME
+        value: Administrador Demo
+      - key: SEED_ADMIN_EMAIL
+        value: demo@broomer.local
+      - key: SEED_ADMIN_PASSWORD # mínimo 12 caracteres; informe só no painel do Render
+        sync: false
+
+  - type: web
+    name: broomer-demo-web
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: .
+    healthCheckPath: /login
+    autoDeployTrigger: off
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: API_URL
+        value: https://broomer-demo-api.onrender.com/api

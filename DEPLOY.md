@@ -167,6 +167,41 @@ tipos, testes unitários, testes e2e com Postgres e build das imagens Docker.
 Veja o resultado na aba **Actions** do repositório. Só atualize o servidor
 com commits em que o CI passou.
 
+## 9b. Demonstração online no Render (dados fictícios)
+
+Para o cliente testar pelo navegador antes de existir servidor próprio. Usa o
+`render.yaml` (duas imagens Docker: api e web) e um banco **separado** da
+produção: uma branch `demo` no Neon. Nunca use a branch `production`.
+
+1. **Neon:** no projeto, crie a branch `demo` (a partir de `production`, que
+   está vazia). Em *Connect*, copie as duas conexões da branch `demo`: a com
+   `-pooler` (`DATABASE_URL`) e a direta (`DIRECT_URL`).
+2. **Render:** crie conta em render.com e conecte o GitHub (permita o
+   repositório `broomer-stock`). *New > Blueprint*, escolha o repositório e a
+   branch `main`.
+3. O Render pede os valores marcados `sync: false`. Digite **só no painel**,
+   nunca no chat ou no GitHub: `DATABASE_URL`, `DIRECT_URL` e
+   `SEED_ADMIN_PASSWORD` (mín. 12 caracteres). `JWT_SECRET` é gerado sozinho.
+4. Aguarde o deploy da API (as migrations e o administrador são criados na
+   subida). Confira se os endereços são mesmo
+   `https://broomer-demo-api.onrender.com` e `https://broomer-demo-web.onrender.com`;
+   se vierem com sufixo, ajuste `WEB_URL` (api) e `API_URL` (web) em
+   *Environment* e faça *Manual Deploy*.
+5. **Dados fictícios** (uma vez, em qualquer computador com Node 20+):
+
+   ```bash
+   DEMO_API_URL=https://broomer-demo-api.onrender.com/api DEMO_PASSWORD='a-mesma-senha-do-passo-3' node deploy/demo/seed.mjs
+   ```
+
+6. Abra o endereço do web e entre com `demo@broomer.local` e a senha. Demais
+   usuários da equipe fictícia: `marina@`, `rafael@` e `juliana@broomer.local`
+   (mesma senha).
+
+Limites do plano gratuito do Render: o serviço dorme após ~15 min sem acesso
+e leva cerca de 1 minuto para acordar (abra a página antes de mostrar ao
+cliente); não há terminal; confirme os limites vigentes no site do Render.
+O deploy não é automático: depois de mudar o código, use *Manual Deploy*.
+
 ## 10. Alternativa: banco no Neon (PostgreSQL gerenciado)
 
 Em vez do Postgres rodando no próprio servidor, o banco pode ficar no
