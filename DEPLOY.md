@@ -211,6 +211,40 @@ e leva cerca de 1 minuto para acordar (abra a página antes de mostrar ao
 cliente); não há terminal; confirme os limites vigentes no site do Render.
 O deploy não é automático: depois de mudar o código, use *Manual Deploy*.
 
+## 9c. Só o site na Vercel (a API continua fora dela)
+
+O site (`apps/web`) roda bem na Vercel; a API (NestJS) não precisa ir junto e
+continua onde estiver (Render, servidor próprio...). O navegador só fala com o
+site; é o servidor do site que chama a API, então não há CORS a ajustar.
+
+1. Em vercel.com: **Add New > Project**, autorize o GitHub e importe o
+   repositório `broomer-stock`.
+2. Em **Root Directory**, clique em **Edit** e escolha `apps/web`. Deixe ligada
+   a opção de incluir arquivos fora da pasta raiz (padrão): o site precisa do
+   `pnpm-lock.yaml` e do `pnpm-workspace.yaml` da raiz.
+3. **Environment Variables** (nenhuma é segredo):
+   - `API_URL` = endereço da API terminado em `/api`
+     (ex.: `https://broomer-demo-api.onrender.com/api`);
+   - `ENABLE_EXPERIMENTAL_COREPACK` = `1` (usa o pnpm 11 do `package.json`; sem
+     isso a Vercel escolhe outra versão do pnpm).
+4. Em **Settings > Build and Deployment > Node.js Version**, escolha `24.x`.
+5. **Deploy.** A região (São Paulo, `gru1`, perto do Neon) e a instalação só do
+   que o site usa vêm do `apps/web/vercel.json`.
+6. Na **API**, troque `WEB_URL` pelo endereço do site na Vercel (usado nos links
+   dos e-mails). No Render, mudar a variável reinicia a API.
+7. Abra o site e teste o login. Se mudar o domínio depois, atualize `WEB_URL`.
+
+Cuidados:
+- **Plano:** o Hobby (gratuito) da Vercel é só para uso pessoal e não comercial;
+  um sistema de loja pede o plano Pro. Confira termos e preço no site da Vercel.
+- **Importação de planilhas:** na Vercel cada requisição às funções aceita cerca
+  de 4,5 MB (confirme no painel). Os relatórios atuais (1 a 2 MB) cabem; um
+  relatório maior teria de ser dividido por período.
+- **Build:** na Vercel o site usa o formato dela; o `output: "standalone"` do
+  `next.config.ts` só vale fora da Vercel (imagem Docker).
+- Se a API dorme (Render gratuito), o primeiro acesso ainda demora cerca de 1
+  minuto: a Vercel resolve a lentidão do site, não a da API.
+
 ## 10. Alternativa: banco no Neon (PostgreSQL gerenciado)
 
 Em vez do Postgres rodando no próprio servidor, o banco pode ficar no
