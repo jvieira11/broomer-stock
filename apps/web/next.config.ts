@@ -16,14 +16,16 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Gera um servidor enxuto em .next/standalone para a imagem Docker.
-  output: "standalone",
+  // Gera um servidor enxuto em .next/standalone para a imagem Docker. Na
+  // Vercel (que define VERCEL=1 no build) o formato próprio dela é usado.
+  output: process.env.VERCEL ? undefined : "standalone",
   outputFileTracingRoot: monorepoRoot,
   turbopack: { root: monorepoRoot },
   poweredByHeader: false,
   experimental: {
     // Importação do relatório de estoque do ERP: até 10 MB (o mesmo limite
-    // da API), com folga para o envelope do formulário.
+    // da API), com folga para o envelope do formulário. Na Vercel, cada
+    // requisição às funções aceita ~4,5 MB (ver DEPLOY.md).
     serverActions: { bodySizeLimit: "11mb" },
   },
   async headers() {
