@@ -73,7 +73,7 @@ export default async function OperationPage({
         </p>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
+      <div className="grid gap-6 2xl:grid-cols-[1fr_20rem]">
         <Card title="Itens" flush>
           <Table head={["Produto", "Variação", "SKU", "Qtd.", "Saldo antes → depois", "Custo un."]}>
             {op.movements.map((m) => (

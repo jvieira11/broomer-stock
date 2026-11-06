@@ -54,8 +54,8 @@ export default async function PurchaseOrderPage({ params }: PageProps<"/compras/
         </p>
       )}
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-3">
-        <Card title="Dados" className="lg:col-span-1">
+      <div className="mb-6 grid gap-6 2xl:grid-cols-3">
+        <Card title="Dados" className="2xl:col-span-1">
           <dl className="grid gap-4">
             <Info label="Fornecedor">{order.supplier?.name}</Info>
             <Info label="Previsão de chegada">{order.expectedAt ? formatDate(order.expectedAt) : ""}</Info>
@@ -67,7 +67,7 @@ export default async function PurchaseOrderPage({ params }: PageProps<"/compras/
             <Info label="Observações">{order.notes}</Info>
           </dl>
         </Card>
-        <Card title="Itens do pedido" className="lg:col-span-2" flush>
+        <Card title="Itens do pedido" className="2xl:col-span-2" flush>
           <Table head={["Produto", "Variação", "Pedido", "Recebido", "Falta", "Custo un."]}>
             {order.items.map((i) => {
               const missing = i.quantityOrdered - i.quantityReceived;
