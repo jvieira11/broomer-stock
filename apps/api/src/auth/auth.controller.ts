@@ -8,7 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ClientIpThrottlerGuard } from '../common/client-ip-throttler.guard';
 import { AuthService } from './auth.service';
 import type { AuthUser } from './auth.types';
 import { CurrentUser, Public, Roles } from './decorators';
@@ -28,7 +28,7 @@ export class AuthController {
   // comando `pnpm --filter api db:seed` e os demais usuários por ele.
   // Limite de tentativas por IP contra força bruta (ver ThrottlerModule).
   @Public()
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ClientIpThrottlerGuard)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
@@ -36,7 +36,7 @@ export class AuthController {
 
   // Sempre responde 204, exista ou não a conta, para não revelar e-mails.
   @Public()
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ClientIpThrottlerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -44,7 +44,7 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ClientIpThrottlerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
@@ -54,7 +54,7 @@ export class AuthController {
   // Qualquer papel troca a própria senha. Devolve um token novo: esta sessão
   // continua e as dos outros aparelhos são encerradas.
   @Roles(...Object.values(Role))
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ClientIpThrottlerGuard)
   @Patch('password')
   changePassword(
     @CurrentUser() user: AuthUser,
