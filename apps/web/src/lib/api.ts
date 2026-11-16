@@ -21,7 +21,14 @@ export class ApiError extends Error {
 // por pessoa, e não para todos de uma vez.
 async function clientIpHeader(): Promise<Record<string, string>> {
   const forwardedFor = (await headers()).get("x-forwarded-for");
-  return forwardedFor ? { "X-Forwarded-For": forwardedFor } : {};
+  return {
+    ...(forwardedFor && { "X-Forwarded-For": forwardedFor }),
+    // Chave combinada com a API (INTERNAL_API_KEY dos dois lados). Só é
+    // enviada se existir; a API sem a chave ligada não exige nada.
+    ...(process.env.INTERNAL_API_KEY && {
+      "X-Internal-Key": process.env.INTERNAL_API_KEY,
+    }),
+  };
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

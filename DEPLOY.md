@@ -245,6 +245,22 @@ Cuidados:
 - Se a API dorme (Render gratuito), o primeiro acesso ainda demora cerca de 1
   minuto: a Vercel resolve a lentidão do site, não a da API.
 
+## 9d. Chave interna entre o site e a API (INTERNAL_API_KEY)
+
+A API fica aberta na internet quando o site roda em outro lugar (Render, Vercel,
+Lovable). Para só o site conseguir chamá-la, defina a mesma `INTERNAL_API_KEY`
+(texto aleatório longo, ex.: `openssl rand -base64 48`) **na API e no site**:
+a API recusa (403) toda chamada sem o cabeçalho `X-Internal-Key` correto, exceto
+`/api/health` e `/api/health/live` (monitores). Com a chave ligada, o limite de
+tentativas de login passa a contar por pessoa: o site envia o IP do usuário em
+`X-Client-IP`, que a API só considera se a chave estiver certa.
+
+- Sem a variável na API, nada muda (a API continua aberta, como antes).
+- Ligue **nos dois lados ao mesmo tempo**: a API com a chave e o site sem ela
+  recebe 403 em tudo. Ordem segura: coloque a chave no site e faça o deploy; só
+  depois coloque na API.
+- O site Next.js (`apps/web`) envia a chave sozinho quando a variável existe.
+
 ## 10. Alternativa: banco no Neon (PostgreSQL gerenciado)
 
 Em vez do Postgres rodando no próprio servidor, o banco pode ficar no
