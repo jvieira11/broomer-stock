@@ -261,6 +261,23 @@ tentativas de login passa a contar por pessoa: o site envia o IP do usuário em
   depois coloque na API.
 - O site Next.js (`apps/web`) envia a chave sozinho quando a variável existe.
 
+### Senha do administrador perdida (sem e-mail nem terminal)
+
+Quando o servidor não tem terminal (Render grátis) nem serviço de e-mail, dá
+para redefinir a senha de **um usuário que já existe** pelo próprio deploy. No
+painel, em *Environment* da API:
+
+1. `SEED_ADMIN_EMAIL` = e-mail do usuário; `SEED_ADMIN_PASSWORD` = senha nova
+   (mín. 12 caracteres, digitada só no painel);
+2. `RESET_ADMIN_PASSWORD` = `sim`; *Manual Deploy*.
+
+Ao subir, o script troca só a senha desse usuário, deixa-o ativo como
+administrador e derruba as sessões abertas dele. Nos logs aparece
+`Senha de ... redefinida`. **Depois, apague `RESET_ADMIN_PASSWORD` e
+`SEED_ADMIN_PASSWORD`** e faça outro deploy: com `RESET_ADMIN_PASSWORD=sim` a
+senha é trocada a cada subida. Se o e-mail não existir, o deploy falha com uma
+mensagem clara em vez de criar um usuário.
+
 ## 10. Alternativa: banco no Neon (PostgreSQL gerenciado)
 
 Em vez do Postgres rodando no próprio servidor, o banco pode ficar no

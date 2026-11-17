@@ -12,6 +12,11 @@ import { PrismaClient, Role } from '../generated/prisma/client';
 //
 // Seguro de rodar mais de uma vez: se a loja já tem um administrador ativo,
 // não faz nada (não troca senha nem cria duplicatas).
+//
+// Senha perdida: com RESET_ADMIN_PASSWORD=sim, o usuário com o e-mail de
+// SEED_ADMIN_EMAIL (que já precisa existir) ganha a senha de SEED_ADMIN_PASSWORD,
+// volta a ficar ativo como administrador e as sessões abertas dele caem.
+// Só mexe nesse usuário. Depois de usar, apague as duas variáveis.
 export async function createAdmin() {
   const organizationName =
     process.env.SEED_ORGANIZATION_NAME?.trim() || 'Broomer';
@@ -44,6 +49,27 @@ export async function createAdmin() {
       throw new Error(
         'O banco tem mais de uma organização; crie o administrador pela tela de Usuários.',
       );
+    }
+    if (process.env.RESET_ADMIN_PASSWORD === 'sim') {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (!existing) {
+        throw new Error(
+          `Não existe usuário com o e-mail ${email}; remova RESET_ADMIN_PASSWORD para criar um administrador.`,
+        );
+      }
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          passwordHash: await hashPassword(password),
+          role: Role.ADMIN,
+          active: true,
+          sessionVersion: { increment: 1 },
+        },
+      });
+      console.log(
+        `Senha de ${email} redefinida; o usuário está ativo como administrador. Apague RESET_ADMIN_PASSWORD e SEED_ADMIN_PASSWORD do ambiente.`,
+      );
+      return;
     }
     if (organizations[0]?.users.length) {
       console.log(
